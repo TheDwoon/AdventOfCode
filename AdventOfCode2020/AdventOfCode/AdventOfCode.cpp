@@ -4,15 +4,11 @@
 #include <iostream>
 #include "../../Math/vec2.h"
 #include "../../Math/vec3.h"
-#include "../../Math/vec.h"
 
 int main()
 {
     math::vec2<int> a(1, 0);
     math::vec2<int> b(0, 1);
-
-    math::vec<2, int> z(1, 2, 3);
-    std::cout << "z: " << z.m_values[0] << ", " << z.m_values[1] << std::endl;
 
     a += b * 2;
 
