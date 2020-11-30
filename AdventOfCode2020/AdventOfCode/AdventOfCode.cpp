@@ -4,17 +4,12 @@
 #include <iostream>
 #include "../../Math/vec2.h"
 #include "../../Math/vec3.h"
+#include "Day00.h"
 
 int main()
 {
-    math::vec2<int> a(1, 0);
-    math::vec2<int> b(0, 1);
-
-    a += b * 2;
-
-    math::vec3d j(0, 0, 0);
-
-    std::cout << "Hello World!\n" << a.x << ", " << a.y;
+    Day00 day00;
+    day00.runDay();
 }
 
 // Programm ausführen: STRG+F5 oder Menüeintrag "Debuggen" > "Starten ohne Debuggen starten"
