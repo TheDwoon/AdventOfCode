@@ -139,9 +139,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AbstractDay.cpp" />
     <ClCompile Include="AdventOfCode.cpp" />
     <ClCompile Include="Day00.cpp" />
+    <ClCompile Include="Day01.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Math\Math.vcxproj">
@@ -151,6 +151,7 @@
   <ItemGroup>
     <ClInclude Include="AbstractDay.h" />
     <ClInclude Include="Day00.h" />
+    <ClInclude Include="Day01.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
