@@ -18,10 +18,10 @@
     <ClCompile Include="AdventOfCode.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="AbstractDay.cpp">
+    <ClCompile Include="Day00.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="Day00.cpp">
+    <ClCompile Include="Day01.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
@@ -30,6 +30,9 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="Day00.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Day01.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

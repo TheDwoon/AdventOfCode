@@ -5,11 +5,15 @@
 #include "../../Math/vec2.h"
 #include "../../Math/vec3.h"
 #include "Day00.h"
+#include "Day01.h"
 
 int main()
 {
     Day00 day00;
     day00.runDay();
+
+    Day01 day01;
+    day01.runDay();
 }
 
 // Programm ausführen: STRG+F5 oder Menüeintrag "Debuggen" > "Starten ohne Debuggen starten"
