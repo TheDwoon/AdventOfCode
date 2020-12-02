@@ -6,6 +6,7 @@
 #include "../../Math/vec3.h"
 #include "Day00.h"
 #include "Day01.h"
+#include "Day02.h"
 
 int main()
 {
@@ -14,6 +15,9 @@ int main()
 
     Day01 day01;
     day01.runDay();
+
+    Day02 day02;
+    day02.runDay();
 }
 
 // Programm ausführen: STRG+F5 oder Menüeintrag "Debuggen" > "Starten ohne Debuggen starten"
