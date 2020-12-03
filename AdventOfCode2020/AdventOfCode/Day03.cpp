@@ -29,12 +29,6 @@ std::string Day03::runPart2(day_t& input)
     long long a4 = ride_slope(7, 1, input);
     long long a5 = ride_slope(1, 2, input);
 
-    output << a1 << '\n';
-    output << a2 << '\n';
-    output << a3 << '\n';
-    output << a4 << '\n';
-    output << a5 << '\n';
-
     output << (a1 * a2 * a3 * a4 * a5);
 
     return output.str();
