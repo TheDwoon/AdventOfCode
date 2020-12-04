@@ -8,6 +8,7 @@
 #include "Day01.h"
 #include "Day02.h"
 #include "Day03.h"
+#include "Day04.h"
 
 int main()
 {
@@ -20,8 +21,11 @@ int main()
     Day02 day02;
     day02.runDay();*/
 
-    Day03 day03;
-    day03.runDay();
+    /*Day03 day03;
+    day03.runDay();*/
+
+    Day04 day04;
+    day04.runDay();
 }
 
 // Programm ausführen: STRG+F5 oder Menüeintrag "Debuggen" > "Starten ohne Debuggen starten"
