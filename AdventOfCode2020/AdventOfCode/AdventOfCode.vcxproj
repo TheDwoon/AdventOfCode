@@ -146,6 +146,7 @@
     <ClCompile Include="Day03.cpp" />
     <ClCompile Include="Day04.cpp" />
     <ClCompile Include="Day05.cpp" />
+    <ClCompile Include="Day06.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Math\Math.vcxproj">
@@ -160,6 +161,7 @@
     <ClInclude Include="Day03.h" />
     <ClInclude Include="Day04.h" />
     <ClInclude Include="Day05.h" />
+    <ClInclude Include="Day06.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
