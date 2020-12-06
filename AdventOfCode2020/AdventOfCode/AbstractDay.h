@@ -4,6 +4,7 @@
 #include <fstream>
 #include <streambuf>
 #include <chrono>
+#include <sstream>
 
 template<typename T>
 class AbstractDay
@@ -11,6 +12,8 @@ class AbstractDay
 private:
 	std::string m_inputFileName;
 	std::string m_title;
+
+	std::string formatTime(std::chrono::duration<long long, std::nano> t);
 
 public:
 	AbstractDay(const char* title, const char* inputFileName);
@@ -31,8 +34,29 @@ AbstractDay<T>::AbstractDay(const char* title, const char* inputFileName) : m_ti
 }
 
 template<typename T>
+std::string AbstractDay<T>::formatTime(std::chrono::duration<long long, std::nano> t) {
+	std::stringstream output;
+	if (t.count() < 10000) {
+		output << t.count() << "ns";
+	}
+	else if (t.count() < 10000000) {
+		output << t.count() / 1000 << "us";
+	}
+	else {
+		output << t.count() / 1000000 << "ms";
+	}
+
+	return output.str();
+}
+
+template<typename T>
 void AbstractDay<T>::runDay()
 {
+	std::cout << "######################################" << std::endl;
+	std::cout << "############### " << m_title << " ###############" << std::endl;
+	std::cout << "######################################" << std::endl;
+	std::cout << std::endl;
+
 	std::string input = getInput();
 	auto t0 = std::chrono::high_resolution_clock::now();
 	T parsedInput = parseInput(input);
@@ -40,21 +64,13 @@ void AbstractDay<T>::runDay()
 	std::string output = runPart1(parsedInput);
 	auto t2 = std::chrono::high_resolution_clock::now();
 
-	auto totalDuration = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t0);
-	auto parseDuration = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
-	auto runDuration = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-
-	std::cout << std::endl;
-	std::cout << "######################################" << std::endl;
-	std::cout << "############### " << m_title << " ###############" << std::endl;
-	std::cout << "######################################" << std::endl;
 	std::cout << std::endl;
 	std::cout << "**************************************" << std::endl;
 	std::cout << output << std::endl;
 	std::cout << "*************** Task 1 ***************" << std::endl;
-	std::cout << "Parsing: " << parseDuration.count() << "ms" << std::endl;
-	std::cout << "Running: " << runDuration.count() << "ms" << std::endl;
-	std::cout << "Total: " << totalDuration.count() << "ms" << std::endl;
+	std::cout << "Parsing: " << formatTime(t1 - t0) << std::endl;
+	std::cout << "Running: " << formatTime(t2 - t1) << std::endl;
+	std::cout << "Total: " << formatTime(t2 - t0) << std::endl;
 	std::cout << "**************************************" << std::endl;
 
 	input = getInput();
@@ -64,17 +80,13 @@ void AbstractDay<T>::runDay()
 	output = runPart2(parsedInput);
 	t2 = std::chrono::high_resolution_clock::now();
 
-	totalDuration = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t0);
-	parseDuration = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
-	runDuration = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-
 	std::cout << std::endl;
 	std::cout << "**************************************" << std::endl;
 	std::cout << output << std::endl;
 	std::cout << "*************** Task 2 ***************" << std::endl;
-	std::cout << "Parsing: " << parseDuration.count() << "ms" << std::endl;
-	std::cout << "Running: " << runDuration.count() << "ms" << std::endl;
-	std::cout << "Total: " << totalDuration.count() << "ms" << std::endl;
+	std::cout << "Parsing: " << formatTime(t1 - t0) << std::endl;
+	std::cout << "Running: " << formatTime(t2 - t1) << std::endl;
+	std::cout << "Total: " << formatTime(t2 - t0) << std::endl;
 	std::cout << "**************************************" << std::endl;
 }
 
