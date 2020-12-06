@@ -3,12 +3,18 @@
 #include <vector>
 #include <array>
 
-class Day06 : public virtual AbstractDay<std::vector<std::array<uint8_t, 26>>>
+struct group_vote {
+	uint16_t voters = 0;
+	std::vector<std::array<uint8_t, 32>> votes;
+};
+
+class Day06 : public virtual AbstractDay<std::vector<group_vote>>
 {
 public:
 	Day06() : AbstractDay("Day 06", "input/input06.txt") {}
 
-	std::vector<std::array<uint8_t, 26>> parseInput(std::string& input) override;
+	std::vector<group_vote> parseInput(std::string& input) override;
 	std::string runPart1(day_t& input) override;
+	std::string runPart2(day_t& input) override;
 };
 
