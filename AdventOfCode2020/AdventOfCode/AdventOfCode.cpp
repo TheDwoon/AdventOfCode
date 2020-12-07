@@ -4,13 +4,14 @@
 #include <iostream>
 #include "../../Math/vec2.h"
 #include "../../Math/vec3.h"
-#include "Day00.h"
-#include "Day01.h"
-#include "Day02.h"
-#include "Day03.h"
-#include "Day04.h"
-#include "Day05.h"
-#include "Day06.h"
+//#include "Day00.h"
+//#include "Day01.h"
+//#include "Day02.h"
+//#include "Day03.h"
+//#include "Day04.h"
+//#include "Day05.h"
+//#include "Day06.h"
+#include "Day07.h"
 
 int main()
 {
@@ -32,8 +33,11 @@ int main()
     /*Day05 day05;
     day05.runDay();*/
 
-    Day06 day06;
-    day06.runDay();
+    /*Day06 day06;
+    day06.runDay()*/;
+
+    Day07 day07;
+    day07.runDay();
 }
 
 // Programm ausführen: STRG+F5 oder Menüeintrag "Debuggen" > "Starten ohne Debuggen starten"
