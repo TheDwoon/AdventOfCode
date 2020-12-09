@@ -1,6 +1,6 @@
 #include "Day06.h"
 #include <sstream>
-#include <intrin.h>
+#include <x86intrin.h>
 
 std::vector<group_vote> Day06::parseInput(std::string& input)
 {
@@ -10,21 +10,21 @@ std::vector<group_vote> Day06::parseInput(std::string& input)
     group_vote group;
     for (std::string line; std::getline(stream, line);)
     {
-        if (line.empty()) 
+        if (line.empty())
         {
             parsed.push_back(group);
             group = group_vote();
         }
-        else 
-        {            
+        else
+        {
             std::array<uint8_t, 32> vote = std::array<uint8_t, 32>();
             for (size_t i = 0; i < line.size() / sizeof(char); i++)
-            {               
-                vote[line[i] - 'a'] = 1;                
+            {
+                vote[line[i] - 'a'] = 1;
             }
 
             group.voters += 1;
-            group.votes.push_back(vote);        
+            group.votes.push_back(vote);
         }
     }
 
