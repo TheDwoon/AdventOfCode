@@ -15,18 +15,14 @@ std::string Day10::runPart1(std::vector<int> &input) {
     std::stringstream output;
     std::sort(input.begin(), input.end());
 
-    int joltJumps[4] {0, 0, 0, 0};
+    int joltJumps[4] {0, 0, 0, 1};
     int currentJolts = 0;
     for (int jolt : input) {
         joltJumps[jolt - currentJolts]++;
         currentJolts = jolt;
     }
 
-    // our device!
-    joltJumps[3]++;
-
     output << (joltJumps[1] * joltJumps[3]);
-
     return output.str();
 }
 
