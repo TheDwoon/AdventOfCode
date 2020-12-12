@@ -15,45 +15,13 @@
 //#include "Day08.h"
 //#include "Day09.h"
 //#include "Day10.h"
-#include "Day11.h"
+//#include "Day11.h"
+#include "Day12.h"
 
 int main()
 {
-    /*Day00 day00;
-    day00.runDay();
-
-    Day01 day01;
-    day01.runDay();
-
-    Day02 day02;
-    day02.runDay();*/
-
-    /*Day03 day03;
-    day03.runDay();*/
-
-    /*Day04 day04;
-    day04.runDay();*/
-
-    /*Day05 day05;
-    day05.runDay();*/
-
-    /*Day06 day06;
-    day06.runDay()*/;
-
-    /*Day07 day07;
-    day07.runDay();*/
-    
-    /*Day08 day08;
-    day08.runDay();*/
-    
-//    Day09 day09;
-//    day09.runDay();
-
-//    Day10 day10;
-//    day10.runDay();
-
-    Day11 day11;
-    day11.runDay();
+    Day12 day12;
+    day12.runDay();
 }
 
 // Programm ausführen: STRG+F5 oder Menüeintrag "Debuggen" > "Starten ohne Debuggen starten"
