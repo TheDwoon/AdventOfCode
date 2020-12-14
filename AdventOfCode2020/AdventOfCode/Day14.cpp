@@ -83,16 +83,16 @@ std::string Day14::runPart2(std::vector<FuzzyInstruction> &input) {
             maskSet = instruction.maskedSet;
 
             floatingBits.clear();
-            for (int i = 0; i < 36; i++) {
+            for (int i = 0; i < 36 && (1 << i) - 1 <= mask; i++) {
                 if (((mask >> i) & 1) == 1)
                     floatingBits.push_back(i);
             }
             possibilities = pow(2, floatingBits.size());
         } else {
-            uint64_t fuzzyAddress = (instruction.memoryAccess | maskSet) & ~mask;
+            const uint64_t fuzzyAddress = (instruction.memoryAccess | maskSet) & ~mask;
             for (uint64_t bits = 0; bits < possibilities; bits++) {
                 uint64_t address = fuzzyAddress;
-                for (size_t i = 0; i < floatingBits.size(); i++) {
+                for (size_t i = 0; i < floatingBits.size() && (1 << i) <= bits; i++) {
                     size_t floating = floatingBits[i];
                     address |= ((bits >> i) & 1) << floating;
                 }
