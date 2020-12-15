@@ -35,6 +35,7 @@ int playGame(std::vector<int>& initial, int rounds) {
         lastNumber = nextNumber;
     }
 
+    delete[] memory;
     return lastNumber;
 }
 
