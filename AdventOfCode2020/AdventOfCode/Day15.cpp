@@ -1,6 +1,6 @@
 #include "Day15.h"
 #include <map>
-#include <set>
+#include <cstring>
 
 std::vector<int> Day15::parseInput(std::string &input) {
     std::vector<int> parsed;
@@ -16,7 +16,8 @@ std::vector<int> Day15::parseInput(std::string &input) {
 }
 
 int playGame(std::vector<int>& initial, int rounds) {
-    std::map<int, int> memory;
+    int* memory = new int[rounds];
+    memset(memory, 0, sizeof(int) * rounds);
 
     int turn = 0;
     for (int i = 0; i < initial.size() - 1; i++) {
