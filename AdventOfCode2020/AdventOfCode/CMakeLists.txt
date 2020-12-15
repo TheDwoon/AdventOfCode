@@ -33,4 +33,4 @@ add_custom_command(TARGET AdventOfCode PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/input/ $<TARGET_FILE_DIR:AdventOfCode>/input/)
 
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -march=native")
+SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -march=native -O3")
