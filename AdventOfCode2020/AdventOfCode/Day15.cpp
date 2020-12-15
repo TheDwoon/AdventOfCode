@@ -15,72 +15,38 @@ std::vector<int> Day15::parseInput(std::string &input) {
     return parsed;
 }
 
-bool canRemember(int number, std::map<int, std::array<int, 2>> &memory) {
-   return memory.find(number) != memory.end();
-}
+int playGame(std::vector<int>& initial, int rounds) {
+    std::map<int, int> memory;
 
-void rememberTurns(int number, int turn, std::map<int, std::array<int, 2>> &memory) {
-    std::array<int, 2>& turns = memory[number];
-    turns[1] = turns[0];
-    turns[0] = turn;
+    int turn = 0;
+    for (int i = 0; i < initial.size() - 1; i++) {
+        memory[initial[i]] = ++turn;
+    }
+
+    int lastNumber = initial[initial.size() - 1];
+    turn = initial.size() + 1;
+    for (;turn <= rounds; ++turn) {
+        int nextNumber = memory[lastNumber];
+        if (nextNumber != 0) {
+            nextNumber = turn - 1 - nextNumber;
+        }
+        memory[lastNumber] = turn - 1;
+        lastNumber = nextNumber;
+    }
+
+    return lastNumber;
 }
 
 std::string Day15::runPart1(std::vector<int> &input) {
     std::stringstream output;
 
-    std::map<int, std::array<int, 2>> memory;
-
-    int turn = 1;
-    for (int number : input) {
-        rememberTurns(number, turn++, memory);
-    }
-
-    int lastSpokenNumber = input[input.size() - 1];
-    for (;turn <= 2020; turn++) {
-        if (!canRemember(lastSpokenNumber, memory)) {
-            lastSpokenNumber = 0;
-        } else {
-            std::array<int, 2>& rememberedTurns = memory[lastSpokenNumber];
-            if (rememberedTurns[1] == 0) {
-                lastSpokenNumber = turn - 1 - rememberedTurns[0];
-            } else {
-                lastSpokenNumber = rememberedTurns[0] - rememberedTurns[1];
-            }
-        }
-
-        rememberTurns(lastSpokenNumber, turn, memory);
-    }
-
-    output << lastSpokenNumber;
+    output << playGame(input, 2020);
     return output.str();
 }
 
 std::string Day15::runPart2(std::vector<int> &input) {
     std::stringstream output;
+    output << playGame(input, 30000000);
 
-    std::map<int, std::array<int, 2>> memory;
-
-    int turn = 1;
-    for (int number : input) {
-        rememberTurns(number, turn++, memory);
-    }
-
-    int lastSpokenNumber = input[input.size() - 1];
-    for (;turn <= 30000000; turn++) {
-        if (!canRemember(lastSpokenNumber, memory)) {
-            lastSpokenNumber = 0;
-        } else {
-            std::array<int, 2>& rememberedTurns = memory[lastSpokenNumber];
-            if (rememberedTurns[1] == 0) {
-                lastSpokenNumber = turn - 1 - rememberedTurns[0];
-            } else {
-                lastSpokenNumber = rememberedTurns[0] - rememberedTurns[1];
-            }
-        }
-
-        rememberTurns(lastSpokenNumber, turn, memory);
-    }
-
-    output << lastSpokenNumber;
     return output.str();
 }
