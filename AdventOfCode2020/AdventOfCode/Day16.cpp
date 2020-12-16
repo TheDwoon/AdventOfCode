@@ -101,7 +101,6 @@ std::string Day16::runPart2(TicketInformation &input) {
             validTickets.push_back(ticket);
 
 
-    std::cout << "Valid Tickets: " << validTickets.size() << std::endl;
     int* fieldColumn = new int[input.fields.size()];
     bool* assignedColumn = new bool[input.fields.size()];
     for (int i = 0; i < input.fields.size(); i++) {
@@ -113,7 +112,6 @@ std::string Day16::runPart2(TicketInformation &input) {
         for (int fieldIdx = 0; fieldIdx < input.fields.size(); fieldIdx++) {
             const Field &field = input.fields[fieldIdx];
             if (fieldColumn[fieldIdx] != -1) {
-                std::cout << "Skipping " << field.name << " already known!" << std::endl << std::endl;
                 continue;
             }
 
@@ -121,33 +119,21 @@ std::string Day16::runPart2(TicketInformation &input) {
             int possibleColumn = -1;
             for (int column = 0; column < input.fields.size(); column++) {
                 if (assignedColumn[column]) {
-                    std::cout << field.name << " for column " << column << " was skipped (already assigned)" << std::endl;
                     continue;
                 }
 
-                std::cout << field.name << " for column " << column << " is ";
                 if (isValidField(validTickets, field, column)) {
                     possibleColumn = column;
                     ++countPossibleColumns;
-                    std::cout << "VALID" << std::endl;
-                } else {
-                    std::cout << "invalid" << std::endl;
                 }
             }
 
             if (countPossibleColumns == 1 && fieldColumn[fieldIdx] == -1) {
-                std::cout << "! Setting " << field.name << "(" << fieldIdx << ") to column " << possibleColumn << std::endl;
                 fieldColumn[fieldIdx] = possibleColumn;
                 assignedColumn[possibleColumn] = true;
-            } else {
-                std::cout << "> Can't decide where to put " << field.name << std::endl;
             }
-            std::cout << std::endl;
         }
     }
-
-    for (int i = 0; i < input.fields.size(); i++)
-        std::cout << input.fields[i].name << " at index " << fieldColumn[i] << std::endl;
 
     long long solution = 1;
     for (int i = 0; i < 6; i++) {
