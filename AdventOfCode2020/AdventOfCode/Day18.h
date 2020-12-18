@@ -3,76 +3,65 @@
 #include <vector>
 #include <iostream>
 
+const char LITERAL = 1;
+const char BRACES = 2;
+const char ADDITION = 3;
+const char MULTIPLICATION = 4;
+
 class Node {
 public:
-	virtual int evaluate() const = 0;
-	virtual void print(std::ostream& os) const = 0;
+	virtual long long evaluate() const = 0;
+	virtual char type() const = 0;
+	virtual bool needsReordering() const { return false; }
+	//virtual void print(std::ostream& os) const = 0;
 };
 
 class Literal : public Node {
-private:
-	int m_value;
 public:
+	int m_value;
 	Literal(int value) : m_value(value) {}
-	int evaluate() const override {
+	long long evaluate() const override {
 		return m_value;
 	}
-	void print(std::ostream& os) const override {
-		os << " [" << m_value << "] ";
-	}
+	char type() const override { return LITERAL; }
+
 };
 
 class Braces : public Node {
-private:
-	std::shared_ptr<Node> m_node;
 public:
+	std::shared_ptr<Node> m_node;
 	Braces(std::shared_ptr<Node> node) : m_node(node) {}
-	int evaluate() const override {
+	long long evaluate() const override {
 		return m_node->evaluate();
 	}
-	void print(std::ostream& os) const override {
-		os << " (";
-		m_node->print(os);
-		os << ") ";
-	}
+	char type() const override { return BRACES; }
 };
 
 class Addition : public Node {
-private:
+public:
 	std::shared_ptr<Node> m_left;
 	std::shared_ptr<Node> m_right;
-public:
 	Addition(std::shared_ptr<Node> left, std::shared_ptr<Node> right) : m_left(left), m_right(right) {}
 
-	int evaluate() const override {
+	long long evaluate() const override {
 		return m_left->evaluate() + m_right->evaluate();
 	}
-	void print(std::ostream& os) const override {
-		os << " [";
-		m_left->print(os);
-		os << " + ";
-		m_right->print(os);
-		os << "] ";
+	char type() const override { return ADDITION; }
+	bool needsReordering() const override {
+		return m_left->type() == MULTIPLICATION;
 	}
 };
 
 class Multiplication : public Node {
-private:
+public:
 	std::shared_ptr<Node> m_left;
 	std::shared_ptr<Node> m_right;
-public:
 	Multiplication(std::shared_ptr<Node> left, std::shared_ptr<Node> right) : m_left(left), m_right(right) {}
 
-	int evaluate() const override {
+	long long evaluate() const override {
 		return m_left->evaluate() * m_right->evaluate();
 	}
-	void print(std::ostream& os) const override {
-		os << " [";
-		m_left->print(os);
-		os << " * ";
-		m_right->print(os);
-		os << "] ";
-	}
+	char type() const override { return MULTIPLICATION; }
 };
 
 class Day18 : public virtual AbstractDay<std::vector<std::shared_ptr<Node>>>
@@ -81,5 +70,6 @@ public:
 	Day18() : AbstractDay("Day 18", "input/input18.txt") {}
 	std::vector<std::shared_ptr<Node>> parseInput(std::string& input) override;
 	std::string runPart1(day_t& input) override;
+	std::string runPart2(day_t& input) override;
 };
 
