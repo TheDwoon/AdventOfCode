@@ -1,10 +1,10 @@
 // AdventOfCode.cpp : Diese Datei enthält die Funktion "main". Hier beginnt und endet die Ausführung des Programms.
 //
 
-#include "Day17.h"
+#include "Day18.h"
 
 int main()
 {
-    Day17 day;
+    Day18 day;
     day.runDay();
 }
