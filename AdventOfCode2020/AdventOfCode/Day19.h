@@ -21,5 +21,6 @@ public:
 	Day19() : AbstractDay("Day 19", "input/input19.txt") {}
 	MessageCollection parseInput(std::string& input) override;
 	std::string runPart1(day_t& input) override;
+	std::string runPart2(day_t& input) override;
 };
 
