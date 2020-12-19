@@ -53,39 +53,65 @@ MessageCollection Day19::parseInput(std::string& input)
 
 const int MAX_DEPTH = 10000;
 
-int matchRule(const std::string &str, int ruleId, std::map<int, Rule> &rules, int pos, int depth = 0) {
+std::vector<int> matchRule(const std::string &str, int ruleId, std::map<int, Rule> &rules, int pos, int depth = 0) {
     Rule& rule = rules[ruleId];
 
     // check if this rule does match that character
-    if (rule.c == str[pos])
-        return 1;
-    else if (rule.c != 0)
-        return 0;
+    if (pos < str.size() && rule.c == str[pos])
+        return std::vector<int>{ 1 };
+    else if (rule.c != 0 || pos >= str.size())
+        return std::vector<int>();
 
-    int firstMatchSize = 0;
+    std::vector<int> firstMatchSizes{ 0 };
     bool firstMatched = rule.first.size() > 0;
-    for (int i = 0; firstMatched && i < rule.first.size() && pos + firstMatchSize < str.size(); i++) {
-        int matched = matchRule(str, rule.first[i], rules, pos + firstMatchSize, depth + 1);
-        firstMatched = matched > 0;
-        firstMatchSize += matched;
+    for (int i = 0; firstMatched && i < rule.first.size(); i++) {
+        std::vector<int> matched;
+        for (int existingMatches : firstMatchSizes) {
+            std::vector<int> newMatches = matchRule(str, rule.first[i], rules, pos + existingMatches, depth + 1);
+            matched.insert(matched.end(), newMatches.begin(), newMatches.end());
+        }
+        firstMatched = matched.size() > 0;
+        std::vector<int> nMatchSize;
+        for (int cMatch : firstMatchSizes)
+            for (int match : matched)
+                nMatchSize.push_back(cMatch + match);
+
+        firstMatchSizes = nMatchSize;
     }
 
-    int secondMatchSize = 0;
+    std::vector<int> secondMatchSizes{ 0 };
     bool secondMatched = rule.second.size() > 0;
-    for (int i = 0; secondMatched && i < rule.second.size() && pos + secondMatchSize < str.size(); i++) {
-        int matched = matchRule(str, rule.second[i], rules, pos + secondMatchSize, depth + 1);
-        secondMatched = matched > 0;
-        secondMatchSize += matched;
+    for (int i = 0; secondMatched && i < rule.second.size(); i++) {
+        std::vector<int> matched;
+        for (int existingMatch : secondMatchSizes) {
+            std::vector<int> nMatches = matchRule(str, rule.second[i], rules, pos + existingMatch, depth + 1);
+            matched.insert(matched.end(), nMatches.begin(), nMatches.end());
+        }
+        secondMatched = matched.size() > 0;
+        std::vector<int> nMatchSize;
+        for (int cMatch : secondMatchSizes)
+            for (int match : matched)
+                nMatchSize.push_back(cMatch + match);
+
+        secondMatchSizes = nMatchSize;
     }
 
-    if (firstMatched && secondMatched)
-        return std::max(firstMatchSize, secondMatchSize);
+    if (firstMatched && secondMatched) {
+        firstMatchSizes.insert(firstMatchSizes.end(), secondMatchSizes.begin(), secondMatchSizes.end());
+        return firstMatchSizes;
+    }
     else if (firstMatched)
-        return firstMatchSize;
+        return firstMatchSizes;
     else if (secondMatched)
-        return secondMatchSize;
+        return secondMatchSizes;
     else
-        return 0;
+        return std::vector<int>();
+}
+
+bool hasMatch(const std::string& str, std::map<int, Rule>& rules) {
+    std::vector<int> matches = matchRule(str, 0, rules, 0, 0);
+    std::cout << str << ": " << matches.size() << std::endl;
+    return std::find(matches.begin(), matches.end(), str.size()) != matches.end();
 }
 
 std::string Day19::runPart1(day_t& input)
@@ -94,7 +120,7 @@ std::string Day19::runPart1(day_t& input)
     
     int matched = 0;
     for (const std::string& message : input.messages) {
-        //matched += matchRule(message, 0, input.rules, 0) == message.size();
+        matched += hasMatch(message, input.rules);
     }
 
     output << matched;
@@ -125,9 +151,7 @@ std::string Day19::runPart2(day_t& input)
     std::stringstream output;
     int matched = 0;
     for (const std::string& message : input.messages) {
-        int match = matchRule(message, 0, input.rules, 0);
-        std::cout << message << ": " << match << std::endl;
-        matched += match == message.size();
+        matched += hasMatch(message, input.rules);
     }
 
     output << matched;
