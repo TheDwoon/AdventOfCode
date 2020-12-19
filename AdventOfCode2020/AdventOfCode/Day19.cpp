@@ -53,7 +53,7 @@ MessageCollection Day19::parseInput(std::string& input)
 
 const int MAX_DEPTH = 10000;
 
-std::vector<int> matchRule(const std::string &str, int ruleId, std::map<int, Rule> &rules, int pos, int depth = 0) {
+std::vector<int> matchRule(const std::string &str, int ruleId, std::map<int, Rule> &rules, int pos) {
     Rule& rule = rules[ruleId];
 
     // check if this rule does match that character
@@ -67,7 +67,7 @@ std::vector<int> matchRule(const std::string &str, int ruleId, std::map<int, Rul
     for (int i = 0; firstMatched && i < rule.first.size(); i++) {
         std::vector<int> matched;
         for (int existingMatches : firstMatchSizes) {
-            std::vector<int> newMatches = matchRule(str, rule.first[i], rules, pos + existingMatches, depth + 1);
+            std::vector<int> newMatches = matchRule(str, rule.first[i], rules, pos + existingMatches);
             for (int nMatch : newMatches)
                 matched.push_back(existingMatches + nMatch);
         }
@@ -80,7 +80,7 @@ std::vector<int> matchRule(const std::string &str, int ruleId, std::map<int, Rul
     for (int i = 0; secondMatched && i < rule.second.size(); i++) {
         std::vector<int> matched;
         for (int existingMatch : secondMatchSizes) {
-            std::vector<int> nMatches = matchRule(str, rule.second[i], rules, pos + existingMatch, depth + 1);
+            std::vector<int> nMatches = matchRule(str, rule.second[i], rules, pos + existingMatch);
             for (int nMatch : nMatches)
                 matched.push_back(existingMatch + nMatch);
         }
@@ -101,7 +101,7 @@ std::vector<int> matchRule(const std::string &str, int ruleId, std::map<int, Rul
 }
 
 bool hasMatch(const std::string& str, std::map<int, Rule>& rules) {
-    std::vector<int> matches = matchRule(str, 0, rules, 0, 0);
+    std::vector<int> matches = matchRule(str, 0, rules, 0);
     return std::find(matches.begin(), matches.end(), str.size()) != matches.end();
 }
 
