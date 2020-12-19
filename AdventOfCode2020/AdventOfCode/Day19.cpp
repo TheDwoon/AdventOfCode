@@ -68,15 +68,11 @@ std::vector<int> matchRule(const std::string &str, int ruleId, std::map<int, Rul
         std::vector<int> matched;
         for (int existingMatches : firstMatchSizes) {
             std::vector<int> newMatches = matchRule(str, rule.first[i], rules, pos + existingMatches, depth + 1);
-            matched.insert(matched.end(), newMatches.begin(), newMatches.end());
+            for (int nMatch : newMatches)
+                matched.push_back(existingMatches + nMatch);
         }
         firstMatched = matched.size() > 0;
-        std::vector<int> nMatchSize;
-        for (int cMatch : firstMatchSizes)
-            for (int match : matched)
-                nMatchSize.push_back(cMatch + match);
-
-        firstMatchSizes = nMatchSize;
+        firstMatchSizes = matched;
     }
 
     std::vector<int> secondMatchSizes{ 0 };
@@ -85,15 +81,11 @@ std::vector<int> matchRule(const std::string &str, int ruleId, std::map<int, Rul
         std::vector<int> matched;
         for (int existingMatch : secondMatchSizes) {
             std::vector<int> nMatches = matchRule(str, rule.second[i], rules, pos + existingMatch, depth + 1);
-            matched.insert(matched.end(), nMatches.begin(), nMatches.end());
+            for (int nMatch : nMatches)
+                matched.push_back(existingMatch + nMatch);
         }
         secondMatched = matched.size() > 0;
-        std::vector<int> nMatchSize;
-        for (int cMatch : secondMatchSizes)
-            for (int match : matched)
-                nMatchSize.push_back(cMatch + match);
-
-        secondMatchSizes = nMatchSize;
+        secondMatchSizes = matched;
     }
 
     if (firstMatched && secondMatched) {
@@ -110,7 +102,6 @@ std::vector<int> matchRule(const std::string &str, int ruleId, std::map<int, Rul
 
 bool hasMatch(const std::string& str, std::map<int, Rule>& rules) {
     std::vector<int> matches = matchRule(str, 0, rules, 0, 0);
-    std::cout << str << ": " << matches.size() << std::endl;
     return std::find(matches.begin(), matches.end(), str.size()) != matches.end();
 }
 
