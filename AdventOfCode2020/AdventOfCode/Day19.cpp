@@ -1,4 +1,5 @@
 #include "Day19.h"
+#include <algorithm>
 
 MessageCollection Day19::parseInput(std::string& input)
 {

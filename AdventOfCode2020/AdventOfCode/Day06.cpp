@@ -1,6 +1,6 @@
 #include "Day06.h"
 #include <sstream>
-#include <intrin.h>
+#include <x86intrin.h>
 
 std::vector<group_vote> Day06::parseInput(std::string& input)
 {
