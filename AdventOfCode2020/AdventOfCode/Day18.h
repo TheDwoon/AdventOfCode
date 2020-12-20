@@ -2,6 +2,7 @@
 #include "AbstractDay.h"
 #include <vector>
 #include <iostream>
+#include <memory>
 
 const char LITERAL = 1;
 const char BRACES = 2;
