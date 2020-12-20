@@ -29,8 +29,8 @@ std::vector<Tile> Day20::parseInput(std::string &input) {
             tile.topSignature |= (ACCESS_TILE(tile.map, x, 0) == FULL_SPOT) << (TILE_SIZE - 1 - x);
             tile.topFlippedSignature |= (ACCESS_TILE(tile.map, x, 0) == FULL_SPOT) << (x);
 
-            tile.bottomSignature |= (ACCESS_TILE(tile.map, x, TILE_SIZE - 1) == FULL_SPOT) << (TILE_SIZE - 1 - x);
-            tile.bottomFlippedSignature |= (ACCESS_TILE(tile.map, x, TILE_SIZE - 1) == FULL_SPOT) << (x);
+            tile.bottomSignature |= (ACCESS_TILE(tile.map, x, TILE_SIZE - 1) == FULL_SPOT) << (x);
+            tile.bottomFlippedSignature |= (ACCESS_TILE(tile.map, x, TILE_SIZE - 1) == FULL_SPOT) << (TILE_SIZE - 1 - x);
         }
 
         tile.leftFlippedSignature = 0;
@@ -38,8 +38,8 @@ std::vector<Tile> Day20::parseInput(std::string &input) {
         tile.rightFlippedSignature = 0;
         tile.rightSignature = 0;
         for (int y = 0; y < TILE_SIZE; y++) {
-            tile.leftSignature |= (ACCESS_TILE(tile.map, 0, y) == FULL_SPOT) << (TILE_SIZE - 1 - y);
-            tile.leftFlippedSignature |= (ACCESS_TILE(tile.map, 0, y) == FULL_SPOT) << (y);
+            tile.leftSignature |= (ACCESS_TILE(tile.map, 0, y) == FULL_SPOT) << (y);
+            tile.leftFlippedSignature |= (ACCESS_TILE(tile.map, 0, y) == FULL_SPOT) << (TILE_SIZE - 1 - y);
 
             tile.rightSignature |= (ACCESS_TILE(tile.map, TILE_SIZE - 1, y) == FULL_SPOT) << (TILE_SIZE - 1 - y);
             tile.rightFlippedSignature |= (ACCESS_TILE(tile.map, TILE_SIZE - 1, y) == FULL_SPOT) << (y);
@@ -87,16 +87,16 @@ typedef char Rotation;
 void getSignatureFacing(const Tile& tile, unsigned short signature, Facing &facing, bool &flippedX, bool &flippedY) {
     if (signature == tile.topSignature || signature == tile.topFlippedSignature) {
         facing = NORTH;
-        flippedY = signature == tile.topFlippedSignature;
+        flippedY = signature != tile.topFlippedSignature;
     } else if (signature == tile.rightSignature || signature == tile.rightFlippedSignature) {
         facing = EAST;
-        flippedX = signature == tile.rightFlippedSignature;
+        flippedX = signature != tile.rightFlippedSignature;
     } else if (signature == tile.bottomSignature || signature == tile.bottomFlippedSignature) {
         facing = SOUTH;
-        flippedY = signature == tile.bottomFlippedSignature;
+        flippedY = signature != tile.bottomFlippedSignature;
     } else if (signature == tile.leftSignature || signature == tile.leftFlippedSignature) {
         facing = WEST;
-        flippedX = signature == tile.leftFlippedSignature;
+        flippedX = signature != tile.leftFlippedSignature;
     } else {
         throw std::exception();
     }
@@ -200,6 +200,17 @@ struct PlacedTile {
             return bottom->getGlobal(x, y - TILE_SIZE);
         }
     }
+
+    char getLocal(int x, int y) const {
+        if (y < TILE_SIZE - 2) {
+            if (x < TILE_SIZE - 2)
+                return ACCESS_TILE(map, x + 1, y + 1);
+            else
+                return right->getGlobal(x - TILE_SIZE + 2, y);
+        } else {
+            return bottom->getGlobal(x, y - TILE_SIZE + 2);
+        }
+    }
 };
 
 std::shared_ptr<PlacedTile> connectTile(std::map<int, std::shared_ptr<PlacedTile>> &knownTiles, const std::vector<Tile> &tiles,
@@ -234,6 +245,11 @@ void printNeighborIds(std::shared_ptr<PlacedTile> tile) {
     if (tile->top)
         std::cout << " Top: " << tile->top->number;
 }
+
+struct Pos {
+    int x;
+    int y;
+};
 
 std::string Day20::runPart2(std::vector<Tile> &input) {
     std::stringstream output;
@@ -282,7 +298,20 @@ std::string Day20::runPart2(std::vector<Tile> &input) {
             std::cout << std::endl;
     }
 
-//    // output id map
+    for (int y = 0; y < 24; y++) {
+        for (int x = 0; x < 24; x++) {
+            std::cout << root->getLocal(x, y);
+        }
+        std::cout << std::endl;
+    }
+
+    std::vector<Pos> monster{ Pos{0, 0}, Pos{1, 1}, Pos{4, 1}, Pos{5, 0}, Pos{6, 0},
+                              Pos{7, 1}, Pos{10, 1}, Pos{11, 0}, Pos{12, 0}, Pos{13, 1},
+                              Pos{16, 1}, Pos{17, 0}, Pos{18, 0}, Pos{18, -1}, Pos{19, 0}};
+
+    // NO!
+
+//    // output id map (TOASTER)
 //    std::shared_ptr<PlacedTile> yBase = root;
 //    while (yBase) {
 //        std::shared_ptr<PlacedTile> xBase = yBase;
