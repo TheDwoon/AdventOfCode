@@ -30,4 +30,5 @@ public:
     Day20() : AbstractDay("Day 20", "input/input20.txt") {}
     std::vector<Tile> parseInput(std::string &input) override;
     std::string runPart1(std::vector<Tile> &input) override;
+    std::string runPart2(std::vector<Tile> &input) override;
 };
