@@ -1,9 +1,9 @@
 #pragma once
 #include "AbstractDay.h"
-#include <deque>
+#include <list>
 
 typedef int cup_t;
-typedef std::deque<cup_t> stack_t;
+typedef std::list<cup_t> stack_t;
 
 class Day23 : public virtual AbstractDay<stack_t> {
 public:
