@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <map>
 #include <vector>
-#include <assert.h>
 
 stack_t Day23::parseInput(std::string &input) {
     stack_t stack;
@@ -143,13 +142,6 @@ std::map<cup_t, Node*> buildFastStructure(std::vector<cup_t>& stack) {
         prev = node;
     }
 
-    for (auto it = cups.begin(); it != cups.end(); ++it) {
-        Node* node = it->second;
-        assert(node->previousValue != nullptr);
-        assert(node->next != nullptr);
-        assert(node->prev != nullptr);
-    }
-
     return cups;
 }
 
@@ -158,7 +150,7 @@ std::string Day23::runPart2(stack_t &input) {
     std::vector<cup_t> stack(input.begin(), input.end());
 
     for (cup_t cup = 10; cup <= 1000000; cup++)
-        input.push_back(cup);
+        stack.push_back(cup);
 
     // fast data structure
     std::map<cup_t, Node*> nodes = buildFastStructure(stack);
@@ -169,8 +161,6 @@ std::string Day23::runPart2(stack_t &input) {
         Node* c1 = currentNode->next;
         Node* c2 = c1->next;
         Node* c3 = c2->next;
-
-
 
         // pick destination
         Node* destinationNode = currentNode->previousValue;
@@ -186,10 +176,12 @@ std::string Day23::runPart2(stack_t &input) {
         currentNode = currentNode->next;
     }
 
-    Node* oneNode = nodes[1];
-    long long star1 = oneNode->next->cup;
-    long long star2 = oneNode->next->next->cup;
+    Node *oneNode = nodes[1];
+    Node *firstStarNode = oneNode->next;
+    Node *secondStarNode = firstStarNode->next;
+    long long firstStar = firstStarNode->cup;
+    long long secondStar = secondStarNode->cup;
 
-    output << (star1 * star2);
+    output << (firstStar * secondStar);
     return output.str();
 }
