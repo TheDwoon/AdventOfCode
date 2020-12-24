@@ -12,7 +12,31 @@ struct Game {
     bool operator<(const Game& other) const {
         return player1 < other.player1 || (player1 == other.player1 && player2 < other.player2);
     }
+
+    bool operator==(const Game& other) const {
+        return player1 == other.player1 && player2 == other.player2;
+    }
 };
+
+// define hash objects for deck_t and Game
+namespace std {
+    template <> struct hash<deck_t> {
+        std::size_t operator()(const deck_t& deck) const noexcept {
+            size_t hash = 0;
+            for (const card_t &card : deck) {
+                hash ^= card;
+            }
+
+            return hash;
+        }
+    };
+
+    template<> struct hash<Game> {
+        std::size_t operator()(const Game& game) const noexcept {
+            return std::hash<deck_t>{}(game.player1) ^ std::hash<deck_t>{}(game.player2);            
+        }
+    };
+}
 
 enum Winner {
     PLAYER_1, PLAYER_2

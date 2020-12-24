@@ -1,6 +1,10 @@
 #include "Day06.h"
 #include <sstream>
+#ifdef _WIN32
+#include <intrin.h>
+#else
 #include <x86intrin.h>
+#endif // WIN32
 
 std::vector<group_vote> Day06::parseInput(std::string& input)
 {
