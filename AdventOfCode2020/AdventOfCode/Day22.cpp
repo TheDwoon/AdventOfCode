@@ -1,5 +1,5 @@
 #include "Day22.h"
-#include <set>
+#include <unordered_set>
 
 Game Day22::parseInput(std::string &input) {
     const std::string p1("Player 1:");
@@ -62,7 +62,7 @@ std::string Day22::runPart1(Game &input) {
 
 Winner playRecursiveGame(Game& game) {
     // check if game was played before
-    std::set<Game> knownGames;
+    std::unordered_set<Game> knownGames;
 
     deck_t &p1 = game.player1;
     deck_t &p2 = game.player2;

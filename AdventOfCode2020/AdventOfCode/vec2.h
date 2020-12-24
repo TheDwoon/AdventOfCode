@@ -70,6 +70,10 @@ public:
     vec2 operator*(int scalar) const {
         return vec2(x * scalar, y * scalar);
     }
+
+    bool operator<(const vec2& other) const {
+        return x < other.x || (x == other.x && y < other.y);
+    }
 };
 
 typedef vec2<int> vec2i;
