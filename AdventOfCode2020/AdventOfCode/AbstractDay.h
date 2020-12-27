@@ -13,22 +13,41 @@ private:
 	std::string m_inputFileName;
 	std::string m_title;
 
-	std::string formatTime(std::chrono::duration<long long, std::nano> t);
+	std::string m_testFile1;
+	std::string m_testFile2;
 
+	std::string readFile(const std::string& name);
+	std::string formatTime(std::chrono::duration<long long, std::nano> t);
 public:
 	AbstractDay(const char* title, const char* inputFileName);
+	AbstractDay(const char* title, const char* inputFileName, const char* test1);
+	AbstractDay(const char* title, const char* inputFileName, const char* test1, const char* test2);
 	typedef T day_t;
 
 	void runDay();
 	std::string getInput();
 
 	virtual T parseInput(std::string& input) = 0;
+	virtual bool testPart1(T& input) { return true; }
 	virtual std::string runPart1(T& input) { return "not implemented"; };
+	virtual bool testPart2(T& input) { return true; }
 	virtual std::string runPart2(T& input) { return "not implemented"; };
 };
 
 template<typename T>
 AbstractDay<T>::AbstractDay(const char* title, const char* inputFileName) : m_title(title), m_inputFileName(inputFileName)
+{
+
+}
+
+template<typename T>
+AbstractDay<T>::AbstractDay(const char* title, const char* inputFileName, const char* test1) : m_title(title), m_inputFileName(inputFileName), m_testFile1(test1)
+{
+
+}
+
+template<typename T>
+AbstractDay<T>::AbstractDay(const char* title, const char* inputFileName, const char* test1, const char* test2) : m_title(title), m_inputFileName(inputFileName), m_testFile1(test1), m_testFile2(test2)
 {
 
 }
@@ -56,6 +75,32 @@ void AbstractDay<T>::runDay()
 	std::cout << "############### " << m_title << " ###############" << std::endl;
 	std::cout << "######################################" << std::endl;
 	std::cout << std::endl;
+	std::cout << "**************************************" << std::endl;
+	auto testStart = std::chrono::high_resolution_clock::now();
+	std::cout << "Testing Part 1: ";
+	if (m_testFile1.size() > 0) {
+		std::string input = readFile(m_testFile1);
+		T parsedInput = parseInput(input);
+		std::cout << testPart1(parsedInput);
+	}
+	else {
+		std::cout << "Skipped";
+	}
+	std::cout << std::endl;
+	std::cout << "Testing Part 2: ";
+	if (m_testFile2.size() > 0) {
+		std::string input = readFile(m_testFile1);
+		T parsedInput = parseInput(input);
+		std::cout << testPart2(parsedInput);
+	}
+	else {
+		std::cout << "Skipped";
+	}
+	std::cout << std::endl;
+	auto testEnd = std::chrono::high_resolution_clock::now();	
+	std::cout << "*************** Tests ****************" << std::endl;
+	std::cout << "Total: " << formatTime(testEnd - testStart) << std::endl;
+	std::cout << "**************************************" << std::endl;
 
 	std::string input = getInput();
 	auto t0 = std::chrono::high_resolution_clock::now();
@@ -91,10 +136,15 @@ void AbstractDay<T>::runDay()
 }
 
 template<typename T>
-std::string AbstractDay<T>::getInput()
-{
-	std::fstream fileStream(this->m_inputFileName.c_str());
+std::string AbstractDay<T>::readFile(const std::string& name) {
+	std::fstream fileStream(name.c_str());
 	std::string fileContent((std::istreambuf_iterator<char>(fileStream)), (std::istreambuf_iterator<char>()));
 
 	return fileContent;
+}
+
+template<typename T>
+std::string AbstractDay<T>::getInput()
+{
+	return readFile(m_inputFileName);
 }
