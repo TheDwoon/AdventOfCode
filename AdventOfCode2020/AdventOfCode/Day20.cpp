@@ -88,33 +88,18 @@ typedef char Rotation;
 void getSignatureFacing(const Tile& tile, unsigned short signature, Facing &facing, bool &flippedX, bool &flippedY) {
     if (signature == tile.topSignature || signature == tile.topFlippedSignature) {
         facing = NORTH;
-        flippedY = signature != tile.topFlippedSignature;
+        flippedY = signature == tile.topFlippedSignature;
     } else if (signature == tile.rightSignature || signature == tile.rightFlippedSignature) {
         facing = EAST;
-        flippedX = signature != tile.rightFlippedSignature;
+        flippedX = signature == tile.rightFlippedSignature;
     } else if (signature == tile.bottomSignature || signature == tile.bottomFlippedSignature) {
         facing = SOUTH;
-        flippedY = signature != tile.bottomFlippedSignature;
+        flippedY = signature == tile.bottomFlippedSignature;
     } else if (signature == tile.leftSignature || signature == tile.leftFlippedSignature) {
         facing = WEST;
-        flippedX = signature != tile.leftFlippedSignature;
+        flippedX = signature == tile.leftFlippedSignature;
     } else {
         throw std::exception();
-    }
-}
-
-unsigned short getOrientedSignature(const Tile& tile, Facing facing, bool flipped) {
-    switch (facing) {
-        case NORTH:
-            return flipped ? tile.topFlippedSignature : tile.topSignature;
-        case SOUTH:
-            return flipped ? tile.bottomFlippedSignature : tile.bottomSignature;
-        case WEST:
-            return flipped ? tile.leftFlippedSignature : tile.leftSignature;
-        case EAST:
-            return flipped? tile.rightFlippedSignature : tile.rightSignature;
-        default:
-            throw std::exception();   // should never happen (I hope)
     }
 }
 
@@ -157,30 +142,32 @@ struct PlacedTile {
         number = tile.number;
         std::cout << "PlacedTile: " << number << " r:" << (int)rotation << " flipped: " << flippedX << " " << flippedY << std::endl;
 
-        if (flippedX)
-            std::swap(topSignature, bottomSignature);
-        if (flippedY)
-            std::swap(leftSignature, rightSignature);
-
-        // copy map in corrected orientation
-        for (int y = 0; y < TILE_SIZE; y++) {
-            for (int x = 0; x < TILE_SIZE; x++) {
-                ACCESS_TILE(map, x, y) = access_rotated(tile.map, x, y, rotation);
-            }
-        }
+        char flippedMap[TILE_SIZE * TILE_SIZE];
 
         // flip image if required
         if (flippedY) {
             for (int y = 0; y < TILE_SIZE; y++) {
-                for (int x = 0; x < TILE_SIZE / 2; x++) {
-                    std::swap(ACCESS_TILE(map, x, y), ACCESS_TILE(map, TILE_SIZE - 1 - x, y));
+                for (int x = 0; x < TILE_SIZE; x++) {
+                    ACCESS_TILE(flippedMap, x, y) = ACCESS_TILE(tile.map, TILE_SIZE - 1 - x, y);                    
                 }
             }
-        } else if (flippedX) {
-            for (int y = 0; y < TILE_SIZE / 2; y++) {
+        }
+        else if (flippedX) {
+            for (int y = 0; y < TILE_SIZE; y++) {
                 for (int x = 0; x < TILE_SIZE; x++) {
-                    std::swap(ACCESS_TILE(map, x, y), ACCESS_TILE(map, x, TILE_SIZE - 1 - y));
+                    ACCESS_TILE(flippedMap, x, y) = ACCESS_TILE(tile.map, x, TILE_SIZE - 1 - y);
                 }
+            }
+        }
+        else {
+            // I know, this problem could be better solved with lambdas modifying the access of tile.map; bla bla
+            memcpy(flippedMap, tile.map, sizeof(flippedMap));
+        }
+
+        // copy map in corrected orientation
+        for (int y = 0; y < TILE_SIZE; y++) {
+            for (int x = 0; x < TILE_SIZE; x++) {
+                ACCESS_TILE(map, x, y) = access_rotated(flippedMap, x, y, rotation);
             }
         }
 
@@ -238,8 +225,10 @@ std::shared_ptr<PlacedTile> connectTile(std::map<int, std::shared_ptr<PlacedTile
 
     // check if tile is already placed in map
     const Tile& tile = *match;
-    if (knownTiles.find(tile.number) != knownTiles.end())
+    if (knownTiles.find(tile.number) != knownTiles.end()) {
+        //std::cout << "Connected " << sourceTile << " <> " << tile.number << std::endl;
         return knownTiles[tile.number];
+    }
 
     // find parameters to create new tile
     Facing requiredFacing = (expandDirection + 2) % 4;
@@ -249,6 +238,8 @@ std::shared_ptr<PlacedTile> connectTile(std::map<int, std::shared_ptr<PlacedTile
     getSignatureFacing(tile, signature, signatureFacing, flippedX, flippedY);
 
     Facing rotation = (requiredFacing - signatureFacing + 4) % 4;
+
+    //std::cout << "Connected " << sourceTile << " <> " << tile.number << std::endl;
 
     std::shared_ptr<PlacedTile> placedTile = std::make_shared<PlacedTile>(tile, rotation, flippedX, flippedY);
     knownTiles[placedTile->number] = placedTile;
@@ -296,6 +287,13 @@ std::string Day20::runPart2(std::vector<Tile> &input) {
             placedTile->right = connectTile(knownPlaces, input, placedTile->number, placedTile->rightSignature, EAST, createdRight);
             bool createdBottom = false;
             placedTile->bottom = connectTile(knownPlaces, input, placedTile->number, placedTile->bottomSignature, SOUTH, createdBottom);
+
+            std::cout << "### " << placedTile->number;
+            std::cout << " N:" << (placedTile->top ? placedTile->top->number : 0);
+            std::cout << " E:" << (placedTile->right ? placedTile->right->number : 0);
+            std::cout << " S:" << (placedTile->bottom ? placedTile->bottom->number : 0);
+            std::cout << " W:" << (placedTile->left ? placedTile->left->number : 0);
+            std::cout << std::endl;
 
             if (createdTop) queue.push_back(placedTile->top);
             if (createdRight) queue.push_back(placedTile->right);
@@ -415,7 +413,7 @@ bool Day20::testPart2(std::vector<Tile> &input) {
     auto t1 = std::make_shared<PlacedTile>(tile, WEST, true, false);
     printMap(t1->map);
 
-    return false;
+    //return false;
     std::string output = runPart2(input);
     return output == "273";
 }
