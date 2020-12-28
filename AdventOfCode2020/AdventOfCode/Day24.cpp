@@ -43,6 +43,12 @@ std::vector<path_t> Day24::parseInput(std::string& input)
     return parsed;
 }
 
+bool Day24::testPart1(day_t& input)
+{
+    std::string output = runPart1(input);
+    return output == "10";
+}
+
 std::map<vec2i, Color> generateInitialPattern(std::vector<path_t> &input) {
     std::map<vec2i, Color> floor;
 
@@ -95,6 +101,12 @@ std::string Day24::runPart1(day_t& input)
     return output.str();
 }
 
+bool Day24::testPart2(day_t& input)
+{
+    std::string output = runPart2(input);
+    return output == "2208";
+}
+
 inline Color getTileColor(const vec2i& pos, const std::map<vec2i, Color>& floor) {
     auto it = floor.find(pos);
     if (it == floor.end())
@@ -132,32 +144,12 @@ Color nextTileColor(const vec2i& pos, const std::map<vec2i, Color>& floor) {
     Color currentColor = getTileColor(pos, floor);
     size_t blackNeighbors = countBlackNeighbors(pos, floor);
 
-    if (currentColor == Color::BLACK && (blackNeighbors == 0 || blackNeighbors == 2))
+    if (currentColor == Color::BLACK && (blackNeighbors == 0 || blackNeighbors > 2))
         return Color::WHITE;
     else if (currentColor == Color::WHITE && blackNeighbors == 2)
         return Color::BLACK;
     else
         return currentColor;
-}
-
-void checkTile(const vec2i& pos, const std::map<vec2i, Color>& floor, std::map<vec2i, Color>& buffer) {
-    Color currentColor = getTileColor(pos, floor);
-    if (currentColor == Color::BLACK) {
-        vec2i e = pos + MOVE_E;
-        vec2i w = pos + MOVE_W;
-        vec2i se = pos + MOVE_SE;
-        vec2i nw = pos + MOVE_NW;
-        vec2i sw = pos + MOVE_SW;
-        vec2i ne = pos + MOVE_NE;
-        checkTile(e, floor, buffer);
-        checkTile(w, floor, buffer);
-        checkTile(se, floor, buffer);
-        checkTile(nw, floor, buffer);
-        checkTile(sw, floor, buffer);
-        checkTile(ne, floor, buffer);
-    }
-
-    buffer[pos] = nextTileColor(pos, floor);
 }
 
 std::string Day24::runPart2(day_t& input)
@@ -166,6 +158,7 @@ std::string Day24::runPart2(day_t& input)
     std::map<vec2i, Color> buffer;
 
     for (int i = 0; i < 100; i++) {
+        int blackTiles = std::count_if(floor.begin(), floor.end(), [](auto& pair) { return pair.second == Color::BLACK; });
         std::set<vec2i> positions;
         for (auto it = floor.begin(); it != floor.end(); ++it) {
             if (it->second == Color::WHITE)
@@ -186,6 +179,7 @@ std::string Day24::runPart2(day_t& input)
         }
 
         std::swap(floor, buffer);
+        buffer.clear();
     }
 
     size_t blackTilesCount = 0;
