@@ -22,6 +22,7 @@ public:
 	AbstractDay(const char* title, const char* inputFileName);
 	AbstractDay(const char* title, const char* inputFileName, const char* test1);
 	AbstractDay(const char* title, const char* inputFileName, const char* test1, const char* test2);
+	virtual ~AbstractDay() = default;
 	typedef T day_t;
 
 	void runDay();
