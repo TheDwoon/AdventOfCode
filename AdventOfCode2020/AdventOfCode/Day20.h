@@ -27,8 +27,10 @@ struct Tile {
 
 class Day20 : public virtual AbstractDay<std::vector<Tile>> {
 public:
-    Day20() : AbstractDay("Day 20", "input/input20.txt") {}
+    Day20() : AbstractDay("Day 20", "input/input20.txt", "input/input20_test.txt", "input/input20_test.txt") {}
     std::vector<Tile> parseInput(std::string &input) override;
+    bool testPart1(std::vector<Tile> &input) override;
     std::string runPart1(std::vector<Tile> &input) override;
+    bool testPart2(std::vector<Tile> &input) override;
     std::string runPart2(std::vector<Tile> &input) override;
 };

@@ -3,6 +3,7 @@
 #include <memory>
 #include <deque>
 #include <algorithm>
+#include "vec2.h"
 
 std::vector<Tile> Day20::parseInput(std::string &input) {
     std::vector<Tile> parsed;
@@ -156,12 +157,6 @@ struct PlacedTile {
         number = tile.number;
         std::cout << "PlacedTile: " << number << " r:" << (int)rotation << " flipped: " << flippedX << " " << flippedY << std::endl;
 
-        // FIXME: this may be wrong
-        topSignature = getOrientedSignature(tile, rotation, flippedY);
-        rightSignature = getOrientedSignature(tile, (rotation + 1) % 4, flippedX);
-        bottomSignature = getOrientedSignature(tile, (rotation + 2) % 4, flippedY);
-        leftSignature = getOrientedSignature(tile, (rotation + 3) % 4, flippedX);
-
         if (flippedX)
             std::swap(topSignature, bottomSignature);
         if (flippedY)
@@ -188,6 +183,21 @@ struct PlacedTile {
                 }
             }
         }
+
+        // read signatures because math is hard and I'm stupid :(
+        topSignature = 0;
+        bottomSignature = 0;
+        for (int x = 0; x < TILE_SIZE; x++) {
+            topSignature |= (ACCESS_TILE(map, x, 0) == FULL_SPOT) << (TILE_SIZE - 1 - x);
+            bottomSignature |= (ACCESS_TILE(map, x, TILE_SIZE - 1) == FULL_SPOT) << (x);
+        }
+
+        leftSignature = 0;
+        rightSignature = 0;
+        for (int y = 0; y < TILE_SIZE; y++) {
+            leftSignature |= (ACCESS_TILE(map, 0, y) == FULL_SPOT) << (y);
+            rightSignature |= (ACCESS_TILE(map, TILE_SIZE - 1, y) == FULL_SPOT) << (TILE_SIZE - 1 - y);
+        }
     }
 
     char getGlobal(int x, int y) const {
@@ -202,13 +212,19 @@ struct PlacedTile {
     }
 
     char getLocal(int x, int y) const {
-        if (y < TILE_SIZE - 2) {
-            if (x < TILE_SIZE - 2)
+        if (y < TILE_SIZE - 2 && y >= 0) {
+            if (x < TILE_SIZE - 2 && x >= 0)
                 return ACCESS_TILE(map, x + 1, y + 1);
             else
-                return right->getGlobal(x - TILE_SIZE + 2, y);
+                if (right && x >= 0)
+                    return right->getLocal(x - TILE_SIZE + 2, y);
+                else
+                    return EMPTY_SPOT;
         } else {
-            return bottom->getGlobal(x, y - TILE_SIZE + 2);
+            if (bottom && y >= 0)
+                return bottom->getLocal(x, y - TILE_SIZE + 2);
+            else
+                return EMPTY_SPOT;
         }
     }
 };
@@ -240,16 +256,24 @@ std::shared_ptr<PlacedTile> connectTile(std::map<int, std::shared_ptr<PlacedTile
     return placedTile;
 }
 
-void printNeighborIds(std::shared_ptr<PlacedTile> tile) {
-    std::cout << "Tile: " << tile->number;
-    if (tile->top)
-        std::cout << " Top: " << tile->top->number;
-}
+int findSeaMonster(const std::vector<vec2i> &monster, const std::shared_ptr<PlacedTile> root) {
+    int monsters = 0;
 
-struct Pos {
-    int x;
-    int y;
-};
+    for (int y = 0; y < 144; y++) {
+        for (int x = 0; x < 144; x++) {
+            bool found = true;
+            for (int i = 0; found && i < monster.size(); i++) {
+                const vec2i &v = monster[i];
+                found = root->getLocal(v.x + x, v.y + y) == FULL_SPOT;
+            }
+
+            if (found)
+                ++monsters;
+        }
+    }
+
+    return monsters;
+}
 
 std::string Day20::runPart2(std::vector<Tile> &input) {
     std::stringstream output;
@@ -305,26 +329,93 @@ std::string Day20::runPart2(std::vector<Tile> &input) {
         std::cout << std::endl;
     }
 
-    std::vector<Pos> monster{ Pos{0, 0}, Pos{1, 1}, Pos{4, 1}, Pos{5, 0}, Pos{6, 0},
-                              Pos{7, 1}, Pos{10, 1}, Pos{11, 0}, Pos{12, 0}, Pos{13, 1},
-                              Pos{16, 1}, Pos{17, 0}, Pos{18, 0}, Pos{18, -1}, Pos{19, 0}};
+    std::vector<vec2i> monster{ {0, 0}, {1, 1}, {4, 1}, {5, 0}, {6, 0},
+                                {7, 1}, {10, 1}, {11, 0}, {12, 0}, {13, 1},
+                              {16, 1}, {17, 0}, {18, 0}, {18, -1}, {19, 0}};
 
-    // NO!
+    int monsters = 0;
+    for (int i = 0; i < 4; i++) {
+        monsters = findSeaMonster(monster, root);
+        if (monsters > 0)
+            break;
+
+        std::vector<vec2i> xFlippedMonster(monster.size());
+        std::transform(monster.begin(), monster.end(), xFlippedMonster.begin(), [](const vec2i& v) { return vec2i {-v.x, v.y}; });
+        monsters = findSeaMonster(xFlippedMonster, root);
+        if (monsters > 0)
+            break;
+
+        std::vector<vec2i> yFlippedMonster(monster.size());
+        std::transform(monster.begin(), monster.end(), yFlippedMonster.begin(), [](const vec2i& v) { return vec2i {v.x, -v.y}; });
+        monsters = findSeaMonster(yFlippedMonster, root);
+        if (monsters > 0)
+            break;
+
+        // rotate monster
+        std::vector<vec2i> rotated;
+        rotated.reserve(monster.size());
+        for (const vec2i &v : monster) {
+            rotated.emplace_back(v.y, -v.x);
+        }
+
+        monster = rotated;
+    }
+
+    std::cout << "MONSTERS: " << monsters << std::endl;
 
 //    // output id map (TOASTER)
-//    std::shared_ptr<PlacedTile> yBase = root;
-//    while (yBase) {
-//        std::shared_ptr<PlacedTile> xBase = yBase;
-//        while (xBase) {
-//            std::cout << xBase->number << " ";
-//            xBase = xBase->right;
-//        }
-//        std::cout << std::endl;
-//
-//        yBase = yBase->bottom;
-//    }
+    int roughWaters = 0;
+    std::shared_ptr<PlacedTile> yBase = root;
+    while (yBase) {
+        std::shared_ptr<PlacedTile> xBase = yBase;
+        while (xBase) {
+            std::cout << xBase->number << " ";
 
-    output << root->number;
+            for (int y = 0; y < TILE_SIZE - 2; y++) {
+                for (int x = 0; x < TILE_SIZE - 2; x++) {
+                    roughWaters += xBase->getLocal(x, y) == FULL_SPOT;
+                }
+            }
+
+            xBase = xBase->right;
+        }
+        std::cout << std::endl;
+
+        yBase = yBase->bottom;
+    }
+
+    output << roughWaters - monsters * monster.size();
 
     return output.str();
+}
+
+bool Day20::testPart1(std::vector<Tile> &input) {
+    std::string output = runPart1(input);
+    return output == "20899048083289";
+}
+
+void printMap(const char* map) {
+    for (int y = 0; y < 10; y++) {
+        for (int x = 0; x < 10; x++) {
+            std::cout << map[y * 10 + x];
+        }
+        std::cout << std::endl;
+    }
+}
+
+bool Day20::testPart2(std::vector<Tile> &input) {
+    Tile& tile = input[3];
+    printMap(tile.map);
+
+    std::cout << std::endl;
+    auto t0 = std::make_shared<PlacedTile>(tile, NORTH, false, false);
+    printMap(t0->map);
+
+    std::cout << std::endl;
+    auto t1 = std::make_shared<PlacedTile>(tile, WEST, true, false);
+    printMap(t1->map);
+
+    return false;
+    std::string output = runPart2(input);
+    return output == "273";
 }
