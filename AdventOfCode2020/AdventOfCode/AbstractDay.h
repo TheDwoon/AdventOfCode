@@ -76,31 +76,39 @@ void AbstractDay<T>::runDay()
 	std::cout << "######################################" << std::endl;
 	std::cout << std::endl;
 	std::cout << "**************************************" << std::endl;
-	auto testStart = std::chrono::high_resolution_clock::now();
-	std::cout << "Testing Part 1: ";
+	bool testsFailed = false;
+	auto testStart = std::chrono::high_resolution_clock::now();	
 	if (m_testFile1.size() > 0) {
 		std::string input = readFile(m_testFile1);
 		T parsedInput = parseInput(input);
-		std::cout << testPart1(parsedInput);
+		bool result = testPart1(parsedInput);
+		std::cout << "Testing Part 1: " << (result ? "PASSED" : "FAILED");
+		testsFailed |= !result;
 	}
 	else {
-		std::cout << "Skipped";
+		std::cout << "Testing Part 1: Skipped";
 	}
-	std::cout << std::endl;
-	std::cout << "Testing Part 2: ";
+	std::cout << std::endl;	
 	if (m_testFile2.size() > 0) {
 		std::string input = readFile(m_testFile1);
 		T parsedInput = parseInput(input);
-		std::cout << testPart2(parsedInput);
+		bool result = testPart2(parsedInput);
+		std::cout << "Testing Part 2: " << (result ? "PASSED" : "FAILED");
+		testsFailed |= !result;
 	}
 	else {
-		std::cout << "Skipped";
+		std::cout << "Testing Part 2: Skipped";
 	}
 	std::cout << std::endl;
 	auto testEnd = std::chrono::high_resolution_clock::now();	
 	std::cout << "*************** Tests ****************" << std::endl;
 	std::cout << "Total: " << formatTime(testEnd - testStart) << std::endl;
 	std::cout << "**************************************" << std::endl;
+
+	if (testsFailed) {
+		std::cout << "Some tests failed. Aborting run!" << std::endl;
+		return;
+	}
 
 	std::string input = getInput();
 	auto t0 = std::chrono::high_resolution_clock::now();
