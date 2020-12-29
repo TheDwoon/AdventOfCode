@@ -86,19 +86,15 @@ typedef char Rotation;
 #define SOUTH 2
 #define WEST 3
 
-void getSignatureFacing(const Tile& tile, unsigned short signature, Facing &facing, bool &flippedX, bool &flippedY) {
+Facing getSignatureFacing(const Tile& tile, unsigned short signature) {
     if (signature == tile.topSignature || signature == tile.topFlippedSignature) {
-        facing = NORTH;
-        flippedY = signature == tile.topFlippedSignature;
+        return NORTH;
     } else if (signature == tile.rightSignature || signature == tile.rightFlippedSignature) {
-        facing = EAST;
-        flippedX = signature == tile.rightFlippedSignature;
+        return EAST;
     } else if (signature == tile.bottomSignature || signature == tile.bottomFlippedSignature) {
-        facing = SOUTH;
-        flippedY = signature == tile.bottomFlippedSignature;
+        return SOUTH;
     } else if (signature == tile.leftSignature || signature == tile.leftFlippedSignature) {
-        facing = WEST;
-        flippedX = signature == tile.leftFlippedSignature;
+        return WEST;
     } else {
         throw std::exception();
     }
@@ -139,7 +135,7 @@ struct PlacedTile {
     int number;
     char map[TILE_SIZE * TILE_SIZE];
 
-    PlacedTile(const Tile& tile, Rotation rotation, bool flippedX, bool flippedY) {
+    PlacedTile(const Tile& tile, Rotation rotation) {
         number = tile.number;
 
         // copy map in corrected orientation
@@ -231,14 +227,10 @@ std::shared_ptr<PlacedTile> connectTile(std::map<int, std::shared_ptr<PlacedTile
 
     // find parameters to create new tile
     Facing requiredFacing = (expandDirection + 2) % 4;
-
-    Facing signatureFacing;
-    bool flippedX = false, flippedY = false;
-    getSignatureFacing(tile, signature, signatureFacing, flippedX, flippedY);
-
+    Facing signatureFacing = getSignatureFacing(tile, signature);
     Facing rotation = (requiredFacing - signatureFacing + 4) % 4;
 
-    std::shared_ptr<PlacedTile> placedTile = std::make_shared<PlacedTile>(tile, rotation, flippedX, flippedY);
+    std::shared_ptr<PlacedTile> placedTile = std::make_shared<PlacedTile>(tile, rotation);
     knownTiles[placedTile->number] = placedTile;
     created = true;
     return placedTile;
@@ -263,19 +255,10 @@ int findSeaMonster(const std::vector<vec2i> &monster, const std::shared_ptr<Plac
     return monsters;
 }
 
-void printMap(const char* map) {
-    for (int y = 0; y < 10; y++) {
-        for (int x = 0; x < 10; x++) {
-            std::cout << map[y * 10 + x];
-        }
-        std::cout << std::endl;
-    }
-}
-
 std::string Day20::runPart2(std::vector<Tile> &input) {
     std::stringstream output;
 
-    std::shared_ptr<PlacedTile> root = std::make_shared<PlacedTile>(input[0], NORTH, false, false);
+    std::shared_ptr<PlacedTile> root = std::make_shared<PlacedTile>(input[0], NORTH);
     {
         std::map<int, std::shared_ptr<PlacedTile>> knownPlaces;
         knownPlaces[root->number] = root;
