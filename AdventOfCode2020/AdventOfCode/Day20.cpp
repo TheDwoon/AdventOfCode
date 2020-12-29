@@ -4,6 +4,7 @@
 #include <deque>
 #include <algorithm>
 #include "vec2.h"
+#include <assert.h>
 
 std::vector<Tile> Day20::parseInput(std::string &input) {
     std::vector<Tile> parsed;
@@ -290,14 +291,21 @@ std::string Day20::runPart2(std::vector<Tile> &input) {
 
             bool createdTop = false;
             placedTile->top = connectTile(knownPlaces, input, placedTile->number, placedTile->topSignature, NORTH, createdTop);
+            assert(!placedTile->top || placedTile->top->bottomSignature == placedTile->topSignature);
+
             bool createdLeft = false;
             placedTile->left = connectTile(knownPlaces, input, placedTile->number, placedTile->leftSignature, WEST, createdLeft);
+            assert(!placedTile->left || placedTile->left->rightSignature == placedTile->leftSignature);
+
             bool createdRight = false;
             placedTile->right = connectTile(knownPlaces, input, placedTile->number, placedTile->rightSignature, EAST, createdRight);
+            assert(!placedTile->right || placedTile->right->leftSignature == placedTile->rightSignature);
+
             bool createdBottom = false;
             placedTile->bottom = connectTile(knownPlaces, input, placedTile->number, placedTile->bottomSignature, SOUTH, createdBottom);
+            assert(!placedTile->bottom || placedTile->bottom->topSignature == placedTile->bottomSignature);
 
-            std::cout << "> N:" << (placedTile->top ? placedTile->top->number : 0) << std::endl;
+            /*std::cout << "> N:" << (placedTile->top ? placedTile->top->number : 0) << std::endl;
             if (placedTile->top) printMap(placedTile->top->map);
             
             std::cout << "### " << placedTile->number << std::endl;
@@ -312,7 +320,7 @@ std::string Day20::runPart2(std::vector<Tile> &input) {
             std::cout << "> E:" << (placedTile->right ? placedTile->right->number : 0) << std::endl;
             if (placedTile->right) printMap(placedTile->right->map);
             
-            std::cout << std::endl << std::endl << std::endl;
+            std::cout << std::endl << std::endl << std::endl;*/
 
             if (createdTop) queue.push_back(placedTile->top);
             if (createdRight) queue.push_back(placedTile->right);
