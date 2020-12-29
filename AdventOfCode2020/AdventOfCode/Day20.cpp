@@ -30,8 +30,8 @@ std::vector<Tile> Day20::parseInput(std::string &input) {
             tile.topSignature |= (ACCESS_TILE(tile.map, x, 0) == FULL_SPOT) << (TILE_SIZE - 1 - x);
             tile.topFlippedSignature |= (ACCESS_TILE(tile.map, x, 0) == FULL_SPOT) << (x);
 
-            tile.bottomSignature |= (ACCESS_TILE(tile.map, x, TILE_SIZE - 1) == FULL_SPOT) << (x);
-            tile.bottomFlippedSignature |= (ACCESS_TILE(tile.map, x, TILE_SIZE - 1) == FULL_SPOT) << (TILE_SIZE - 1 - x);
+            tile.bottomSignature |= (ACCESS_TILE(tile.map, x, TILE_SIZE - 1) == FULL_SPOT) << (TILE_SIZE - 1 - x);
+            tile.bottomFlippedSignature |= (ACCESS_TILE(tile.map, x, TILE_SIZE - 1) == FULL_SPOT) << (x);
         }
 
         tile.leftFlippedSignature = 0;
@@ -39,8 +39,8 @@ std::vector<Tile> Day20::parseInput(std::string &input) {
         tile.rightFlippedSignature = 0;
         tile.rightSignature = 0;
         for (int y = 0; y < TILE_SIZE; y++) {
-            tile.leftSignature |= (ACCESS_TILE(tile.map, 0, y) == FULL_SPOT) << (y);
-            tile.leftFlippedSignature |= (ACCESS_TILE(tile.map, 0, y) == FULL_SPOT) << (TILE_SIZE - 1 - y);
+            tile.leftSignature |= (ACCESS_TILE(tile.map, 0, y) == FULL_SPOT) << (TILE_SIZE - 1 - y);
+            tile.leftFlippedSignature |= (ACCESS_TILE(tile.map, 0, y) == FULL_SPOT) << (y);
 
             tile.rightSignature |= (ACCESS_TILE(tile.map, TILE_SIZE - 1, y) == FULL_SPOT) << (TILE_SIZE - 1 - y);
             tile.rightFlippedSignature |= (ACCESS_TILE(tile.map, TILE_SIZE - 1, y) == FULL_SPOT) << (y);
@@ -176,13 +176,13 @@ struct PlacedTile {
         bottomSignature = 0;
         for (int x = 0; x < TILE_SIZE; x++) {
             topSignature |= (ACCESS_TILE(map, x, 0) == FULL_SPOT) << (TILE_SIZE - 1 - x);
-            bottomSignature |= (ACCESS_TILE(map, x, TILE_SIZE - 1) == FULL_SPOT) << (x);
+            bottomSignature |= (ACCESS_TILE(map, x, TILE_SIZE - 1) == FULL_SPOT) << (TILE_SIZE - 1 - x);
         }
 
         leftSignature = 0;
         rightSignature = 0;
         for (int y = 0; y < TILE_SIZE; y++) {
-            leftSignature |= (ACCESS_TILE(map, 0, y) == FULL_SPOT) << (y);
+            leftSignature |= (ACCESS_TILE(map, 0, y) == FULL_SPOT) << (TILE_SIZE - 1 - y);
             rightSignature |= (ACCESS_TILE(map, TILE_SIZE - 1, y) == FULL_SPOT) << (TILE_SIZE - 1 - y);
         }
     }
@@ -266,6 +266,15 @@ int findSeaMonster(const std::vector<vec2i> &monster, const std::shared_ptr<Plac
     return monsters;
 }
 
+void printMap(const char* map) {
+    for (int y = 0; y < 10; y++) {
+        for (int x = 0; x < 10; x++) {
+            std::cout << map[y * 10 + x];
+        }
+        std::cout << std::endl;
+    }
+}
+
 std::string Day20::runPart2(std::vector<Tile> &input) {
     std::stringstream output;
 
@@ -288,12 +297,22 @@ std::string Day20::runPart2(std::vector<Tile> &input) {
             bool createdBottom = false;
             placedTile->bottom = connectTile(knownPlaces, input, placedTile->number, placedTile->bottomSignature, SOUTH, createdBottom);
 
-            std::cout << "### " << placedTile->number;
-            std::cout << " N:" << (placedTile->top ? placedTile->top->number : 0);
-            std::cout << " E:" << (placedTile->right ? placedTile->right->number : 0);
-            std::cout << " S:" << (placedTile->bottom ? placedTile->bottom->number : 0);
-            std::cout << " W:" << (placedTile->left ? placedTile->left->number : 0);
-            std::cout << std::endl;
+            std::cout << "> N:" << (placedTile->top ? placedTile->top->number : 0) << std::endl;
+            if (placedTile->top) printMap(placedTile->top->map);
+            
+            std::cout << "### " << placedTile->number << std::endl;
+            printMap(placedTile->map);
+            
+            std::cout << "> S:" << (placedTile->bottom ? placedTile->bottom->number : 0) << std::endl;
+            if (placedTile->bottom) printMap(placedTile->bottom->map);
+            
+            std::cout << "> W:" << (placedTile->left ? placedTile->left->number : 0) << std::endl;
+            if (placedTile->left) printMap(placedTile->left->map);
+            
+            std::cout << "> E:" << (placedTile->right ? placedTile->right->number : 0) << std::endl;
+            if (placedTile->right) printMap(placedTile->right->map);
+            
+            std::cout << std::endl << std::endl << std::endl;
 
             if (createdTop) queue.push_back(placedTile->top);
             if (createdRight) queue.push_back(placedTile->right);
@@ -392,15 +411,6 @@ bool Day20::testPart1(std::vector<Tile> &input) {
     return output == "20899048083289";
 }
 
-void printMap(const char* map) {
-    for (int y = 0; y < 10; y++) {
-        for (int x = 0; x < 10; x++) {
-            std::cout << map[y * 10 + x];
-        }
-        std::cout << std::endl;
-    }
-}
-
 bool Day20::testPart2(std::vector<Tile> &input) {
     Tile& tile = input[3];
     printMap(tile.map);
@@ -413,7 +423,7 @@ bool Day20::testPart2(std::vector<Tile> &input) {
     auto t1 = std::make_shared<PlacedTile>(tile, WEST, true, false);
     printMap(t1->map);
 
-    //return false;
     std::string output = runPart2(input);
+    return false;
     return output == "273";
 }
