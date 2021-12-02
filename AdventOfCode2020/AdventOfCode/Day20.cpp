@@ -4,6 +4,7 @@
 #include <deque>
 #include <algorithm>
 #include "vec2.h"
+#include <assert.h>
 
 std::vector<Tile> Day20::parseInput(std::string &input) {
     std::vector<Tile> parsed;
@@ -30,8 +31,8 @@ std::vector<Tile> Day20::parseInput(std::string &input) {
             tile.topSignature |= (ACCESS_TILE(tile.map, x, 0) == FULL_SPOT) << (TILE_SIZE - 1 - x);
             tile.topFlippedSignature |= (ACCESS_TILE(tile.map, x, 0) == FULL_SPOT) << (x);
 
-            tile.bottomSignature |= (ACCESS_TILE(tile.map, x, TILE_SIZE - 1) == FULL_SPOT) << (x);
-            tile.bottomFlippedSignature |= (ACCESS_TILE(tile.map, x, TILE_SIZE - 1) == FULL_SPOT) << (TILE_SIZE - 1 - x);
+            tile.bottomSignature |= (ACCESS_TILE(tile.map, x, TILE_SIZE - 1) == FULL_SPOT) << (TILE_SIZE - 1 - x);
+            tile.bottomFlippedSignature |= (ACCESS_TILE(tile.map, x, TILE_SIZE - 1) == FULL_SPOT) << (x);
         }
 
         tile.leftFlippedSignature = 0;
@@ -39,8 +40,8 @@ std::vector<Tile> Day20::parseInput(std::string &input) {
         tile.rightFlippedSignature = 0;
         tile.rightSignature = 0;
         for (int y = 0; y < TILE_SIZE; y++) {
-            tile.leftSignature |= (ACCESS_TILE(tile.map, 0, y) == FULL_SPOT) << (y);
-            tile.leftFlippedSignature |= (ACCESS_TILE(tile.map, 0, y) == FULL_SPOT) << (TILE_SIZE - 1 - y);
+            tile.leftSignature |= (ACCESS_TILE(tile.map, 0, y) == FULL_SPOT) << (TILE_SIZE - 1 - y);
+            tile.leftFlippedSignature |= (ACCESS_TILE(tile.map, 0, y) == FULL_SPOT) << (y);
 
             tile.rightSignature |= (ACCESS_TILE(tile.map, TILE_SIZE - 1, y) == FULL_SPOT) << (TILE_SIZE - 1 - y);
             tile.rightFlippedSignature |= (ACCESS_TILE(tile.map, TILE_SIZE - 1, y) == FULL_SPOT) << (y);
@@ -85,36 +86,17 @@ typedef char Rotation;
 #define SOUTH 2
 #define WEST 3
 
-void getSignatureFacing(const Tile& tile, unsigned short signature, Facing &facing, bool &flippedX, bool &flippedY) {
+Facing getSignatureFacing(const Tile& tile, unsigned short signature) {
     if (signature == tile.topSignature || signature == tile.topFlippedSignature) {
-        facing = NORTH;
-        flippedY = signature != tile.topFlippedSignature;
+        return NORTH;
     } else if (signature == tile.rightSignature || signature == tile.rightFlippedSignature) {
-        facing = EAST;
-        flippedX = signature != tile.rightFlippedSignature;
+        return EAST;
     } else if (signature == tile.bottomSignature || signature == tile.bottomFlippedSignature) {
-        facing = SOUTH;
-        flippedY = signature != tile.bottomFlippedSignature;
+        return SOUTH;
     } else if (signature == tile.leftSignature || signature == tile.leftFlippedSignature) {
-        facing = WEST;
-        flippedX = signature != tile.leftFlippedSignature;
+        return WEST;
     } else {
         throw std::exception();
-    }
-}
-
-unsigned short getOrientedSignature(const Tile& tile, Facing facing, bool flipped) {
-    switch (facing) {
-        case NORTH:
-            return flipped ? tile.topFlippedSignature : tile.topSignature;
-        case SOUTH:
-            return flipped ? tile.bottomFlippedSignature : tile.bottomSignature;
-        case WEST:
-            return flipped ? tile.leftFlippedSignature : tile.leftSignature;
-        case EAST:
-            return flipped? tile.rightFlippedSignature : tile.rightSignature;
-        default:
-            throw std::exception();   // should never happen (I hope)
     }
 }
 
@@ -153,14 +135,8 @@ struct PlacedTile {
     int number;
     char map[TILE_SIZE * TILE_SIZE];
 
-    PlacedTile(const Tile& tile, Rotation rotation, bool flippedX, bool flippedY) {
+    PlacedTile(const Tile& tile, Rotation rotation) {
         number = tile.number;
-        std::cout << "PlacedTile: " << number << " r:" << (int)rotation << " flipped: " << flippedX << " " << flippedY << std::endl;
-
-        if (flippedX)
-            std::swap(topSignature, bottomSignature);
-        if (flippedY)
-            std::swap(leftSignature, rightSignature);
 
         // copy map in corrected orientation
         for (int y = 0; y < TILE_SIZE; y++) {
@@ -168,36 +144,44 @@ struct PlacedTile {
                 ACCESS_TILE(map, x, y) = access_rotated(tile.map, x, y, rotation);
             }
         }
+        
+        generateSignatures();
+    }
 
-        // flip image if required
-        if (flippedY) {
-            for (int y = 0; y < TILE_SIZE; y++) {
-                for (int x = 0; x < TILE_SIZE / 2; x++) {
-                    std::swap(ACCESS_TILE(map, x, y), ACCESS_TILE(map, TILE_SIZE - 1 - x, y));
-                }
-            }
-        } else if (flippedX) {
-            for (int y = 0; y < TILE_SIZE / 2; y++) {
-                for (int x = 0; x < TILE_SIZE; x++) {
-                    std::swap(ACCESS_TILE(map, x, y), ACCESS_TILE(map, x, TILE_SIZE - 1 - y));
-                }
-            }
-        }
-
-        // read signatures because math is hard and I'm stupid :(
+    void generateSignatures() {
         topSignature = 0;
         bottomSignature = 0;
         for (int x = 0; x < TILE_SIZE; x++) {
             topSignature |= (ACCESS_TILE(map, x, 0) == FULL_SPOT) << (TILE_SIZE - 1 - x);
-            bottomSignature |= (ACCESS_TILE(map, x, TILE_SIZE - 1) == FULL_SPOT) << (x);
+            bottomSignature |= (ACCESS_TILE(map, x, TILE_SIZE - 1) == FULL_SPOT) << (TILE_SIZE - 1 - x);
         }
 
         leftSignature = 0;
         rightSignature = 0;
         for (int y = 0; y < TILE_SIZE; y++) {
-            leftSignature |= (ACCESS_TILE(map, 0, y) == FULL_SPOT) << (y);
+            leftSignature |= (ACCESS_TILE(map, 0, y) == FULL_SPOT) << (TILE_SIZE - 1 - y);
             rightSignature |= (ACCESS_TILE(map, TILE_SIZE - 1, y) == FULL_SPOT) << (TILE_SIZE - 1 - y);
         }
+    }
+
+    void flipX() {
+        for (int y = 0; y < TILE_SIZE / 2; y++) {
+            for (int x = 0; x < TILE_SIZE; x++) {
+                std::swap(ACCESS_TILE(map, x, y), ACCESS_TILE(map, x, TILE_SIZE - 1 - y));
+            }
+        }
+
+        generateSignatures();
+    }
+
+    void flipY() {
+        for (int y = 0; y < TILE_SIZE; y++) {
+            for (int x = 0; x < TILE_SIZE / 2; x++) {
+                std::swap(ACCESS_TILE(map, x, y), ACCESS_TILE(map, TILE_SIZE - 1 - x, y));
+            }
+        }
+
+        generateSignatures();
     }
 
     char getGlobal(int x, int y) const {
@@ -243,14 +227,10 @@ std::shared_ptr<PlacedTile> connectTile(std::map<int, std::shared_ptr<PlacedTile
 
     // find parameters to create new tile
     Facing requiredFacing = (expandDirection + 2) % 4;
-
-    Facing signatureFacing;
-    bool flippedX = false, flippedY = false;
-    getSignatureFacing(tile, signature, signatureFacing, flippedX, flippedY);
-
+    Facing signatureFacing = getSignatureFacing(tile, signature);
     Facing rotation = (requiredFacing - signatureFacing + 4) % 4;
 
-    std::shared_ptr<PlacedTile> placedTile = std::make_shared<PlacedTile>(tile, rotation, flippedX, flippedY);
+    std::shared_ptr<PlacedTile> placedTile = std::make_shared<PlacedTile>(tile, rotation);
     knownTiles[placedTile->number] = placedTile;
     created = true;
     return placedTile;
@@ -278,7 +258,7 @@ int findSeaMonster(const std::vector<vec2i> &monster, const std::shared_ptr<Plac
 std::string Day20::runPart2(std::vector<Tile> &input) {
     std::stringstream output;
 
-    std::shared_ptr<PlacedTile> root = std::make_shared<PlacedTile>(input[0], NORTH, false, false);
+    std::shared_ptr<PlacedTile> root = std::make_shared<PlacedTile>(input[0], NORTH);
     {
         std::map<int, std::shared_ptr<PlacedTile>> knownPlaces;
         knownPlaces[root->number] = root;
@@ -290,12 +270,27 @@ std::string Day20::runPart2(std::vector<Tile> &input) {
 
             bool createdTop = false;
             placedTile->top = connectTile(knownPlaces, input, placedTile->number, placedTile->topSignature, NORTH, createdTop);
+            if (createdTop && placedTile->top->bottomSignature != placedTile->topSignature)
+                placedTile->top->flipY();
+            assert(!placedTile->top || placedTile->top->bottomSignature == placedTile->topSignature);
+
             bool createdLeft = false;
             placedTile->left = connectTile(knownPlaces, input, placedTile->number, placedTile->leftSignature, WEST, createdLeft);
+            if (createdLeft && placedTile->left->rightSignature != placedTile->leftSignature)
+                placedTile->left->flipX();
+            assert(!placedTile->left || placedTile->left->rightSignature == placedTile->leftSignature);
+
             bool createdRight = false;
             placedTile->right = connectTile(knownPlaces, input, placedTile->number, placedTile->rightSignature, EAST, createdRight);
+            if (createdRight && placedTile->right->leftSignature != placedTile->rightSignature)
+                placedTile->right->flipX();
+            assert(!placedTile->right || placedTile->right->leftSignature == placedTile->rightSignature);
+
             bool createdBottom = false;
             placedTile->bottom = connectTile(knownPlaces, input, placedTile->number, placedTile->bottomSignature, SOUTH, createdBottom);
+            if (createdBottom && placedTile->bottom->topSignature != placedTile->bottomSignature)
+                placedTile->bottom->flipY();
+            assert(!placedTile->bottom || placedTile->bottom->topSignature == placedTile->bottomSignature);
 
             if (createdTop) queue.push_back(placedTile->top);
             if (createdRight) queue.push_back(placedTile->right);
@@ -310,24 +305,6 @@ std::string Day20::runPart2(std::vector<Tile> &input) {
     }
     while (root->left)
         root = root->left;
-
-    for (int y = 0; y < 30; y++) {
-        for (int x = 0; x < 30; x++) {
-            std::cout << root->getGlobal(x, y);
-            if ((x + 1) % 10 == 0)
-                std::cout << " ";
-        }
-        std::cout << std::endl;
-        if ((y + 1) % 10 == 0)
-            std::cout << std::endl;
-    }
-
-    for (int y = 0; y < 24; y++) {
-        for (int x = 0; x < 24; x++) {
-            std::cout << root->getLocal(x, y);
-        }
-        std::cout << std::endl;
-    }
 
     std::vector<vec2i> monster{ {0, 0}, {1, 1}, {4, 1}, {5, 0}, {6, 0},
                                 {7, 1}, {10, 1}, {11, 0}, {12, 0}, {13, 1},
@@ -361,16 +338,11 @@ std::string Day20::runPart2(std::vector<Tile> &input) {
         monster = rotated;
     }
 
-    std::cout << "MONSTERS: " << monsters << std::endl;
-
-//    // output id map (TOASTER)
     int roughWaters = 0;
     std::shared_ptr<PlacedTile> yBase = root;
     while (yBase) {
         std::shared_ptr<PlacedTile> xBase = yBase;
         while (xBase) {
-            std::cout << xBase->number << " ";
-
             for (int y = 0; y < TILE_SIZE - 2; y++) {
                 for (int x = 0; x < TILE_SIZE - 2; x++) {
                     roughWaters += xBase->getLocal(x, y) == FULL_SPOT;
@@ -379,8 +351,6 @@ std::string Day20::runPart2(std::vector<Tile> &input) {
 
             xBase = xBase->right;
         }
-        std::cout << std::endl;
-
         yBase = yBase->bottom;
     }
 
@@ -394,28 +364,7 @@ bool Day20::testPart1(std::vector<Tile> &input) {
     return output == "20899048083289";
 }
 
-void printMap(const char* map) {
-    for (int y = 0; y < 10; y++) {
-        for (int x = 0; x < 10; x++) {
-            std::cout << map[y * 10 + x];
-        }
-        std::cout << std::endl;
-    }
-}
-
 bool Day20::testPart2(std::vector<Tile> &input) {
-    Tile& tile = input[3];
-    printMap(tile.map);
-
-    std::cout << std::endl;
-    auto t0 = std::make_shared<PlacedTile>(tile, NORTH, false, false);
-    printMap(t0->map);
-
-    std::cout << std::endl;
-    auto t1 = std::make_shared<PlacedTile>(tile, WEST, true, false);
-    printMap(t1->map);
-
-    return false;
     std::string output = runPart2(input);
     return output == "273";
 }
