@@ -1,7 +1,7 @@
-#include "Day01.h"
+#include "Day02.h"
 
 int main()
 {
-    Day01 day;
+    Day02 day;
     day.runDay();
 }

@@ -10,7 +10,8 @@ add_executable(AdventOfCode
         AdventOfCode.cpp
         Day00.cpp
         Day00.h
-        Day01.cpp Day01.h)
+        Day01.cpp Day01.h
+        Day02.cpp Day02.h)
 
 add_custom_command(TARGET AdventOfCode PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
