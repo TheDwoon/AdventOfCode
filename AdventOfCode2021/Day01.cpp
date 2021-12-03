@@ -36,8 +36,7 @@ std::string Day01::runPart2(day_t& input)
 
     const int size = input.size();
     int increased = 0;
-    for (size_t i = 0; i < size - 3; ++i)
-    {;
+    for (size_t i = 0; i < size - 3; ++i) {
         increased += (input[i] < input[i + 3]);
     }
 
