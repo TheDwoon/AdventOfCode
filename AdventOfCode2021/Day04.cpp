@@ -1,21 +1,88 @@
-#include "Day04.h"
+#pragma once
+#include <string>
+#include <iostream>
+#include <chrono>
+#include <sstream>
+#include <iterator>
+#include <vector>
 
-std::vector<std::string> tokenize(const std::string &input, const std::string &separator) {
-    std::vector<std::string> tokenized;
+#define TITLE "Day 04"
 
-    size_t pos = 0;
-    size_t tokenEnd;
-    do {
-        tokenEnd = input.find(separator, pos);
-        std::string token = input.substr(pos, (tokenEnd - pos));
-        tokenized.push_back(token);
-        pos = tokenEnd + separator.size();
-    } while(tokenEnd != std::string::npos);
+struct Field {
+    uint16_t number { 0 };
+    bool marked { false };
+};
 
-    return tokenized;
-}
+struct Board {
+    Field fields[25];
 
-Bingo Day04::parseInput(std::string &input) {
+    size_t sumUnmarked() {
+        size_t sum { 0 };
+        for (size_t y = 0; y < 5; ++y) {
+            for (size_t x = 0; x < 5; ++x) {
+                Field &field = getField(x, y);
+                if (!field.marked)
+                    sum += field.number;
+            }
+        }
+
+        return sum;
+    }
+
+    void mark(uint16_t number) {
+        for (size_t y = 0; y < 5; ++y) {
+            for (size_t x = 0; x < 5; ++x) {
+                Field &field = getField(x, y);
+                if (field.number == number)
+                    field.marked = true;
+            }
+        }
+    }
+
+    bool isWon() {
+        for (size_t row = 0; row < 5; row++) {
+            if (getField(0, row).marked
+                && getField(1, row).marked
+                && getField(2, row).marked
+                && getField(3, row).marked
+                && getField(4, row).marked)
+                return true;
+        }
+
+        for (size_t col = 0; col < 5; col++) {
+            if (getField(col, 0).marked
+                && getField(col, 1).marked
+                && getField(col, 2).marked
+                && getField(col, 3).marked
+                && getField(col, 4).marked)
+                return true;
+        }
+
+        return false;
+    }
+
+    inline Field& getField(size_t x, size_t y) {
+        return fields[y * 5 + x];
+    }
+};
+
+struct Bingo {
+    std::vector<uint16_t> drawnNumbers;
+    std::vector<Board> boards;
+
+    int isWon() {
+        for (int i = 0; i < boards.size(); ++i)
+            if (boards[i].isWon())
+                return i;
+
+        return -1;
+    }
+};
+
+std::vector<std::string> tokenize(const std::string &input, const std::string &separator);
+typedef Bingo day_t;
+
+day_t parseInput(std::string &input) {
     Bingo bingo;
     std::stringstream stream(input);
 
@@ -44,7 +111,7 @@ Bingo Day04::parseInput(std::string &input) {
     return bingo;
 }
 
-std::string Day04::runPart1(Bingo &input) {
+std::string runPart1(day_t& input) {
     std::stringstream output;
 
     uint16_t currentNumber;
@@ -63,7 +130,7 @@ std::string Day04::runPart1(Bingo &input) {
     return output.str();
 }
 
-std::string Day04::runPart2(Bingo &input) {
+std::string runPart2(day_t& input) {
     std::stringstream output;
 
     uint16_t currentNumber;
@@ -92,4 +159,90 @@ std::string Day04::runPart2(Bingo &input) {
     output << (board.sumUnmarked() * currentNumber);
 
     return output.str();
+}
+
+// BOILER PLATE CODE BELOW
+
+std::string readInput() {
+    std::cin >> std::noskipws;
+
+    std::istream_iterator<char> it(std::cin);
+    std::istream_iterator<char> end;
+    std::string fileContent(it, end);
+
+    return fileContent;
+}
+
+std::string formatTime(std::chrono::duration<long long, std::nano> t) {
+    std::stringstream output;
+    if (t.count() < 10000) {
+        output << t.count() << "ns";
+    }
+    else if (t.count() < 10000000) {
+        output << t.count() / 1000 << "us";
+    }
+    else {
+        output << t.count() / 1000000 << "ms";
+    }
+
+    return output.str();
+}
+
+int main()
+{
+    std::cout << "######################################" << std::endl;
+    std::cout << "############### " << TITLE << " ###############" << std::endl;
+    std::cout << "######################################" << std::endl;
+    std::cout << std::endl;
+    std::cout << "**************************************" << std::endl;
+    std::cout << std::endl;
+
+    const std::string originalInput = readInput();
+
+    std::string input = originalInput;
+    auto t0 = std::chrono::high_resolution_clock::now();
+    day_t parsedInput = parseInput(input);
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::string output = runPart1(parsedInput);
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    std::cout << std::endl;
+    std::cout << "**************************************" << std::endl;
+    std::cout << output << std::endl;
+    std::cout << "*************** Task 1 ***************" << std::endl;
+    std::cout << "Parsing: " << formatTime(t1 - t0) << std::endl;
+    std::cout << "Running: " << formatTime(t2 - t1) << std::endl;
+    std::cout << "Total: " << formatTime(t2 - t0) << std::endl;
+    std::cout << "**************************************" << std::endl;
+
+    input = originalInput;
+    t0 = std::chrono::high_resolution_clock::now();
+    parsedInput = parseInput(input);
+    t1 = std::chrono::high_resolution_clock::now();
+    output = runPart2(parsedInput);
+    t2 = std::chrono::high_resolution_clock::now();
+
+    std::cout << std::endl;
+    std::cout << "**************************************" << std::endl;
+    std::cout << output << std::endl;
+    std::cout << "*************** Task 2 ***************" << std::endl;
+    std::cout << "Parsing: " << formatTime(t1 - t0) << std::endl;
+    std::cout << "Running: " << formatTime(t2 - t1) << std::endl;
+    std::cout << "Total: " << formatTime(t2 - t0) << std::endl;
+    std::cout << "**************************************" << std::endl;
+}
+
+std::vector<std::string> tokenize(const std::string &input, const std::string &separator) {
+    std::vector<std::string> tokenized;
+
+    size_t pos = 0;
+    size_t tokenEnd;
+    do {
+        tokenEnd = input.find(separator, pos);
+        std::string token = input.substr(pos, (tokenEnd - pos));
+        tokenized.push_back(token);
+        pos = tokenEnd + separator.size();
+    } while(tokenEnd != std::string::npos);
+
+    return tokenized;
 }
