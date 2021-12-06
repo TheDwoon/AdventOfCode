@@ -59,21 +59,17 @@ std::string runPart2(day_t& input) {
     std::stringstream output;
 
     uint64_t schools[9] { 0 };
-    uint64_t schools_next[9] { 0 };
 
     for (const uint8_t& fish : input)
         schools[fish] += 1;
 
     for (size_t day = 0; day < 256; ++day) {
-        std::fill(schools_next, schools_next + 9, 0);
-        schools_next[8] = schools[0];
-        schools_next[6] = schools[0];
-
+        uint64_t duplicators = schools[0];
         for (size_t i = 1; i < 9; ++i) {
-            schools_next[i - 1] += schools[i];
+            schools[i - 1] = schools[i];
         }
-
-        std::swap(schools, schools_next);
+        schools[8] = duplicators;
+        schools[6] += duplicators;
     }
 
     uint64_t fishes { 0 };
