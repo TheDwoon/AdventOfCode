@@ -1,4 +1,3 @@
-#pragma once
 #include <string>
 #include <iostream>
 #include <chrono>
@@ -7,7 +6,7 @@
 #include <vector>
 #include <algorithm>
 
-#define TITLE "Day XX"
+#define TITLE "Day 07"
 
 std::vector<std::string> tokenize(const std::string &input, const std::string &separator);
 typedef std::vector<int> day_t;
