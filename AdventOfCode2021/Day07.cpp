@@ -111,9 +111,6 @@ int main()
 	std::cout << "######################################" << std::endl;
 	std::cout << "############### " << TITLE << " ###############" << std::endl;
 	std::cout << "######################################" << std::endl;
-	std::cout << std::endl;
-	std::cout << "**************************************" << std::endl;
-	std::cout << std::endl;
 
 	const std::string originalInput = readInput();
 
