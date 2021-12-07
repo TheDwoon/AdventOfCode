@@ -36,9 +36,10 @@ std::string runPart1(day_t& input) {
     std::stringstream output;
 
     int max = *std::max_element(input.begin(), input.end());
+    int min = *std::min_element(input.begin(), input.end());
 
-    int best_sum = sumForP_1(input, 0);
-    for (int p = 1; p < max; ++p) {
+    int best_sum = sumForP_1(input, min);
+    for (int p = min + 1; p < max; ++p) {
         int sum = sumForP_1(input, p);
         if (sum < best_sum) {
             best_sum = sum;
@@ -64,9 +65,10 @@ std::string runPart2(day_t& input) {
     std::stringstream output;
 
     int max = *std::max_element(input.begin(), input.end());
+    int min = *std::min_element(input.begin(), input.end());
 
-    int best_sum = sumForP_2(input, 0);
-    for (int p = 1; p < max; ++p) {
+    int best_sum = sumForP_2(input, min);
+    for (int p = min + 1; p < max; ++p) {
         int sum = sumForP_2(input, p);
         if (sum < best_sum) {
             best_sum = sum;
