@@ -28,10 +28,8 @@ const uint8_t digit_8 = sig_a | sig_b | sig_c | sig_d | sig_e | sig_f | sig_g;
 const uint8_t digit_9 = sig_a | sig_b | sig_c | sig_d | sig_f | sig_g;;
 
 struct ScrambledInformation {
-    uint8_t input[10] { 0 };
-    uint8_t s_input[10] { 0 };
-    uint8_t display[4] { 0 };
-    uint8_t s_display[4] { 0 };
+    uint8_t input[14] { 0 };
+    uint8_t s_input[14] { 0 };
 };
 
 std::vector<std::string> tokenize(const std::string &input, const std::string &separator);
@@ -84,8 +82,8 @@ day_t parseInput(std::string &input) {
             info.input[i] = state;
             info.s_input[i] = word.size();
         } else {
-            info.display[i - 11] = state;
-            info.s_display[i - 11] = word.size();
+            info.input[i - 1] = state;
+            info.s_input[i - 1] = word.size();
         }
 
         if (i == 14) {
@@ -116,8 +114,8 @@ std::string runPart1(day_t& input) {
     size_t appearances { 0 };
 
     for (const ScrambledInformation &info : input) {
-        for (uint8_t display_signal_size : info.s_display) {
-            switch (display_signal_size) {
+        for (size_t i = 0; i < 4; i++) {
+            switch (info.s_input[10 + i]) {
                 case 2:
                 case 3:
                 case 4:
