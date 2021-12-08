@@ -88,19 +88,7 @@ day_t parseInput(std::string &input) {
 }
 
 std::string runPart1(day_t& input) {
-//    std::cout << "0: " << (int) digit_0 << '\n';
-//    std::cout << "1: " << (int) digit_1 << '\n';
-//    std::cout << "2: " << (int) digit_2 << '\n';
-//    std::cout << "3: " << (int) digit_3 << '\n';
-//    std::cout << "4: " << (int) digit_4 << '\n';
-//    std::cout << "5: " << (int) digit_5 << '\n';
-//    std::cout << "6: " << (int) digit_6 << '\n';
-//    std::cout << "7: " << (int) digit_7 << '\n';
-//    std::cout << "8: " << (int) digit_8 << '\n';
-//    std::cout << "9: " << (int) digit_9 << std::endl;
-
     std::stringstream output;
-
     size_t appearances { 0 };
 
     for (const ScrambledInformation &info : input) {
