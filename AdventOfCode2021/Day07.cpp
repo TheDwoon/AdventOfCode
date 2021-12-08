@@ -5,6 +5,7 @@
 #include <iterator>
 #include <vector>
 #include <algorithm>
+#include <immintrin.h>
 
 #define TITLE "Day 07"
 
