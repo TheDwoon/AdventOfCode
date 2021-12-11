@@ -14,5 +14,6 @@ add_executable(Day06 Day06.cpp)
 add_executable(Day07 Day07.cpp)
 add_executable(Day08 Day08.cpp)
 add_executable(Day09 Day09.cpp)
+add_executable(Day10 Day10.cpp)
 
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -march=native")
