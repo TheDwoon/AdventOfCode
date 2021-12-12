@@ -5,8 +5,10 @@
 #include <iterator>
 #include <vector>
 #include <map>
+#include <deque>
 
 #define TITLE "Day 12"
+#define DEBUG
 
 struct Cave {
     std::string name;
@@ -46,13 +48,75 @@ day_t parseInput(std::string &input) {
         parsed.caves[from.name] = from;
         parsed.caves[to.name] = to;
         parsed.connections[from.name].push_back(to);
+        parsed.connections[to.name].push_back(from);
     }
 
     return parsed;
 }
 
+struct node {
+    const node* previous {nullptr};
+    std::string name;
+};
+
+bool has_visited(const node* n, const std::string &name) {
+    while (n != nullptr) {
+        if (n->name == name)
+            return true;
+
+        n = n->previous;
+    }
+
+    return false;
+}
+
+#ifdef DEBUG
+void print_path(const node* n) {
+    if (n->previous != nullptr)
+        print_path(n->previous);
+
+    std::cout << " " << n->name;
+}
+#endif
+
 std::string runPart1(day_t& input) {
     std::stringstream output;
+    std::deque<const node*> allocated_nodes;
+    std::deque<const node*> complete_paths;
+
+    std::deque<const node*> queue;
+    node* start_node = new node();
+    start_node->name = "start";
+    allocated_nodes.push_back(start_node);
+    queue.push_back(start_node);
+
+    while (!queue.empty()) {
+        const node* c = queue.front();
+        queue.pop_front();
+
+        const std::vector<Cave>& next_caves = input.connections[c->name];
+        for (const Cave& next_cave : next_caves) {
+            if (next_cave.small && has_visited(c, next_cave.name))
+                continue;
+
+            node* n = new node();
+            n->name = next_cave.name;
+            n->previous = c;
+            allocated_nodes.push_back(n);
+
+            if ("end" == next_cave.name)
+                complete_paths.push_back(n);
+            else
+                queue.push_back(n);
+        }
+    }
+
+    output << complete_paths.size();
+
+    // don't leek memory even though we could
+    for (const node *n : allocated_nodes) {
+        delete n;
+    }
 
     return output.str();
 }
