@@ -56,7 +56,6 @@ day_t parseInput(std::string &input) {
 struct node {
     const node* previous {nullptr};
     std::string name;
-    bool small;
 };
 
 bool has_visited(const node* n, const std::string &name) {
@@ -121,37 +120,41 @@ std::string runPart1(day_t& input) {
     return output.str();
 }
 
-bool can_visit_small_cave(const node* c, const std::string& name) {
-    std::map<std::string, uint16_t> visits;
-    while (c != nullptr) {
-        if (c->small)
-            visits[c->name] += 1;
+struct node_e {
+    const node_e* previous {nullptr};
+    std::string name;
+    std::map<std::string, uint16_t> visited;
+    bool small;
+};
 
-        c = c->previous;
-    }
-
+bool can_visit_small_cave(const node_e* c, const std::string& name) {
     bool visitedTwice = false;
-    for (const auto &it : visits) {
+    for (const auto &it : c->visited) {
         if (it.first != name && it.second >= 2)
             visitedTwice = true;
     }
 
-    return !visitedTwice && visits[name] < 2 || visitedTwice && visits[name] < 1;
+    auto it = c->visited.find(name);
+    uint16_t value { 0 };
+    if (it != c->visited.end())
+        value = it->second;
+
+    return !visitedTwice && value < 2 || visitedTwice && value < 1;
 }
 
 std::string runPart2(day_t& input) {
     std::stringstream output;
-    std::deque<const node*> allocated_nodes;
-    std::deque<const node*> complete_paths;
+    std::deque<const node_e*> allocated_nodes;
+    std::deque<const node_e*> complete_paths;
 
-    std::deque<const node*> queue;
-    node* start_node = new node();
+    std::deque<const node_e*> queue;
+    node_e* start_node = new node_e();
     start_node->name = "start";
     allocated_nodes.push_back(start_node);
     queue.push_back(start_node);
 
     while (!queue.empty()) {
-        const node* c = queue.front();
+        const node_e* c = queue.front();
         queue.pop_front();
 
         const std::vector<Cave>& next_caves = input.connections[c->name];
@@ -159,10 +162,13 @@ std::string runPart2(day_t& input) {
             if (next_cave.small && !can_visit_small_cave(c, next_cave.name) || next_cave.name == "start")
                 continue;
 
-            node* n = new node();
+            node_e* n = new node_e();
             n->name = next_cave.name;
             n->small = next_cave.small;
             n->previous = c;
+            n->visited = c->visited;
+            if (n->small)
+                n->visited[n->name] += 1;
             allocated_nodes.push_back(n);
 
             if ("end" == next_cave.name)
@@ -182,7 +188,7 @@ std::string runPart2(day_t& input) {
     output << complete_paths.size();
 
     // don't leek memory even though we could
-    for (const node *n : allocated_nodes) {
+    for (const node_e *n : allocated_nodes) {
         delete n;
     }
 
