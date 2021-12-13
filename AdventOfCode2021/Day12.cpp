@@ -8,7 +8,6 @@
 #include <deque>
 
 #define TITLE "Day 12"
-#define DEBUG
 
 struct Cave {
     std::string name;
@@ -57,6 +56,7 @@ day_t parseInput(std::string &input) {
 struct node {
     const node* previous {nullptr};
     std::string name;
+    bool small;
 };
 
 bool has_visited(const node* n, const std::string &name) {
@@ -121,8 +121,70 @@ std::string runPart1(day_t& input) {
     return output.str();
 }
 
+bool can_visit_small_cave(const node* c, const std::string& name) {
+    std::map<std::string, uint16_t> visits;
+    while (c != nullptr) {
+        if (c->small)
+            visits[c->name] += 1;
+
+        c = c->previous;
+    }
+
+    bool visitedTwice = false;
+    for (const auto &it : visits) {
+        if (it.first != name && it.second >= 2)
+            visitedTwice = true;
+    }
+
+    return !visitedTwice && visits[name] < 2 || visitedTwice && visits[name] < 1;
+}
+
 std::string runPart2(day_t& input) {
     std::stringstream output;
+    std::deque<const node*> allocated_nodes;
+    std::deque<const node*> complete_paths;
+
+    std::deque<const node*> queue;
+    node* start_node = new node();
+    start_node->name = "start";
+    allocated_nodes.push_back(start_node);
+    queue.push_back(start_node);
+
+    while (!queue.empty()) {
+        const node* c = queue.front();
+        queue.pop_front();
+
+        const std::vector<Cave>& next_caves = input.connections[c->name];
+        for (const Cave& next_cave : next_caves) {
+            if (next_cave.small && !can_visit_small_cave(c, next_cave.name) || next_cave.name == "start")
+                continue;
+
+            node* n = new node();
+            n->name = next_cave.name;
+            n->small = next_cave.small;
+            n->previous = c;
+            allocated_nodes.push_back(n);
+
+            if ("end" == next_cave.name)
+                complete_paths.push_back(n);
+            else
+                queue.push_back(n);
+        }
+    }
+
+#ifdef DEBUG
+    for (const node* path : complete_paths) {
+        print_path(path);
+        std::cout << std::endl;
+    }
+#endif
+
+    output << complete_paths.size();
+
+    // don't leek memory even though we could
+    for (const node *n : allocated_nodes) {
+        delete n;
+    }
 
     return output.str();
 }
