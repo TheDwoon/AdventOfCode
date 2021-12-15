@@ -5,7 +5,7 @@
 #include <iterator>
 #include <vector>
 #include <set>
-#include <deque>
+#include <queue>
 #include <list>
 #include <algorithm>
 #include "vec2.h"
@@ -46,6 +46,12 @@ struct node {
     uint32_t total_risk;
 };
 
+struct compare_node {
+    bool operator() (const node* lhs, const node* rhs) const {
+        return lhs->total_risk > rhs->total_risk;
+    }
+};
+
 node* build_node(const day_t& map, std::list<node*> &allocated_nodes, const node* previous, int x, int y) {
     node* next_node = new node;
     next_node->previous = previous;
@@ -67,14 +73,15 @@ const vec2i dir_right { 1, 0 };
 
 const node* a_star(const day_t& map, std::list<node*> &allocated_nodes) {
     std::set<vec2i> visited;
-    std::deque<node*> queue;
-    queue.push_back(allocated_nodes.front());
+    std::priority_queue<const node*, std::vector<const node*>, compare_node> queue;
+    queue.emplace(allocated_nodes.front());
     visited.insert(allocated_nodes.front()->position);
 
     const node* target_node {nullptr};
 
     while (!queue.empty()) {
-        const node* current_node = queue.front();
+        const node* current_node = queue.top();
+        queue.pop();
 
         const vec2i& current_position = current_node->position;
 #ifdef DEBUG
@@ -92,26 +99,20 @@ const node* a_star(const day_t& map, std::list<node*> &allocated_nodes) {
 
         if (left.x >= 0 && visited.find(left) == visited.end()) {
             visited.insert(left);
-            queue.emplace_back(build_node(map, allocated_nodes, current_node, left.x, left.y));
+            queue.emplace(build_node(map, allocated_nodes, current_node, left.x, left.y));
         }
         if (right.x < map.width && visited.find(right) == visited.end()) {
             visited.insert(right);
-            queue.emplace_back(build_node(map, allocated_nodes, current_node, right.x, right.y));
+            queue.emplace(build_node(map, allocated_nodes, current_node, right.x, right.y));
         }
         if (down.y >= 0 && visited.find(down) == visited.end()) {
             visited.insert(down);
-            queue.emplace_back(build_node(map, allocated_nodes, current_node, down.x, down.y));
+            queue.emplace(build_node(map, allocated_nodes, current_node, down.x, down.y));
         }
         if (up.y < map.height && visited.find(up) == visited.end()) {
             visited.insert(up);
-            queue.emplace_back(build_node(map, allocated_nodes, current_node, up.x, up.y));
+            queue.emplace(build_node(map, allocated_nodes, current_node, up.x, up.y));
         }
-
-        queue.pop_front();
-
-        std::sort(queue.begin(), queue.end(), [](const node* lhs, const node* rhs) -> bool {
-            return lhs->total_risk < rhs->total_risk;
-        });
     }
 
     return target_node;
