@@ -11,7 +11,7 @@
 #include "vec2.h"
 
 #define TITLE "Day 15"
-#define DEBUG
+//#define DEBUG
 
 struct Map {
     uint16_t width { 0 };
@@ -51,7 +51,9 @@ node* build_node(const day_t& map, std::list<node*> &allocated_nodes, const node
     next_node->previous = previous;
     next_node->position = { x, y };
     next_node->risk_movement = previous->risk_movement + map.tiles[y * map.width + x];
-    next_node->risk_heuristic = (map.width - 1 - x) + (map.height - 1 - y);
+    next_node->risk_heuristic = 0;
+//    next_node->risk_heuristic = (uint32_t) std::sqrt((map.width - 1 - x) + (map.height - 1 - y));
+//    next_node->risk_heuristic = (map.width - 1 - x) + (map.height - 1 - y);
     next_node->total_risk = next_node->risk_movement + next_node->risk_heuristic;
 
     allocated_nodes.push_back(next_node);
@@ -112,20 +114,10 @@ const node* a_star(const day_t& map, std::list<node*> &allocated_nodes) {
         });
     }
 
-#ifdef DEBUG
-    const node* cp = target_node;
-    while (cp != nullptr) {
-        std::cout << cp->position.x << ',' << cp->position.y << " <- ";
-        cp = cp->previous;
-    }
-
-    std::cout << '\n';
-#endif
-
     return target_node;
 }
 
-std::string runPart1(day_t& input) {
+std::string runPart1(day_t& map) {
     std::stringstream output;
     std::list<node*> allocated_nodes;
 
@@ -136,7 +128,33 @@ std::string runPart1(day_t& input) {
     n->total_risk = 0;
     allocated_nodes.push_back(n);
 
-    const node* path = a_star(input, allocated_nodes);
+    const node* path = a_star(map, allocated_nodes);
+
+#ifdef DEBUG
+    std::set<vec2i> path_positions;
+    const node* cp = path;
+    while (cp != nullptr) {
+        path_positions.insert(cp->position);
+        std::cout << cp->position.x << ',' << cp->position.y << " <- ";
+        cp = cp->previous;
+    }
+
+    std::cout << '\n';
+    std::cout << '\n';
+    for (int y = 0; y < map.height; y++) {
+        for (int x = 0; x < map.width; x++) {
+            const vec2i pos { x, y };
+            if (path_positions.find(pos) == path_positions.end()) {
+                std::cout << (int) map.tiles[y * map.width + x];
+            } else {
+                std::cout << "\033[31m" << (int) map.tiles[y * map.width + x] << "\033[39m";
+            }
+        }
+        std::cout << '\n';
+    }
+
+    std::cout << '\n';
+#endif
 
     output << path->risk_movement;
 
@@ -147,8 +165,68 @@ std::string runPart1(day_t& input) {
     return output.str();
 }
 
-std::string runPart2(day_t& input) {
+std::string runPart2(day_t& map) {
+    Map large_map;
+    large_map.width = 5 * map.width;
+    large_map.height = 5 * map.height;
+    large_map.tiles.resize(large_map.width * large_map.height);
+
+    for (int leap_y = 0; leap_y < 5; leap_y++) {
+        for (int leap_x = 0; leap_x < 5; leap_x++) {
+            for (int y = 0; y < map.height; y++) {
+                for (int x = 0; x < map.width; x++) {
+                    const uint32_t large_idx = (leap_y * map.height + y) * large_map.width + (leap_x * map.width + x);
+                    large_map.tiles[large_idx] = map.tiles[y * map.width + x] + leap_x + leap_y;
+                    while (large_map.tiles[large_idx] > 9)
+                        large_map.tiles[large_idx] -= 9;
+                }
+            }
+        }
+    }
+
     std::stringstream output;
+    std::list<node*> allocated_nodes;
+
+    node* n = new node();
+    n->position = { 0, 0 };
+    n->risk_movement = 0;
+    n->risk_heuristic = 0;
+    n->total_risk = 0;
+    allocated_nodes.push_back(n);
+
+    const node* path = a_star(large_map, allocated_nodes);
+
+#ifdef DEBUG
+    std::set<vec2i> path_positions;
+    const node* cp = path;
+    while (cp != nullptr) {
+        path_positions.insert(cp->position);
+        std::cout << cp->position.x << ',' << cp->position.y << " <- ";
+        cp = cp->previous;
+    }
+
+    std::cout << '\n';
+    std::cout << '\n';
+    for (int y = 0; y < large_map.height; y++) {
+        for (int x = 0; x < large_map.width; x++) {
+            const vec2i pos { x, y };
+            if (path_positions.find(pos) == path_positions.end()) {
+                std::cout << (int) large_map.tiles[y * large_map.width + x];
+            } else {
+                std::cout << "\033[31m" << (int) large_map.tiles[y * large_map.width + x] << "\033[39m";
+            }
+        }
+        std::cout << '\n';
+    }
+
+    std::cout << '\n';
+#endif
+
+    output << path->risk_movement;
+
+    for (const node* node : allocated_nodes) {
+        delete node;
+    }
 
     return output.str();
 }
