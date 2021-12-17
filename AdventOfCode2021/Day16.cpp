@@ -4,6 +4,8 @@
 #include <sstream>
 #include <iterator>
 #include <vector>
+#include <cassert>
+#include <deque>
 
 #define TITLE "Day 16"
 
@@ -24,34 +26,49 @@ T read_bits(uint32_t start_bit, uint16_t length, const bits_transmission &input)
     size_t start_idx = start_bit / 8;
     size_t end_idx = (start_bit + length + 7) / 8;
     size_t block_size = end_idx - start_idx;
+    result = result ;
     switch (block_size) {
         case 1: {
-            result = static_cast<T>(raw_data[start_idx] << block_offset);
+            uint8_t d = raw_data[start_idx];
+            d = d << block_offset;
+            d = d >> (8 - length);
+            result = static_cast<T>(d);
             break;
         }
         case 2: {
-            const auto* d = reinterpret_cast<const uint16_t*>(raw_data + start_idx);
-            result = static_cast<T>(*d << block_offset);
+            uint16_t d = (raw_data[start_idx] << 8) | raw_data[start_idx + 1];
+            d = d << block_offset;
+            d = d >> (16 - length);
+            result = static_cast<T>(d);
             break;
         }
         case 3:
         case 4: {
-            const auto* d = reinterpret_cast<const uint32_t *>(raw_data + start_idx);
-            result = static_cast<T>(*d << block_offset);
+            uint32_t d = (raw_data[start_idx + 0] << 24) | (raw_data[start_idx + 1] << 16)
+                    | (raw_data[start_idx + 2] << 8) | (raw_data[start_idx + 3]);
+            d = d << block_offset;
+            d = d >> (32 - length);
+            result = static_cast<T>(d);
             break;
         }
         case 5:
         case 6:
         case 7:
         case 8: {
-            const auto* d = reinterpret_cast<const uint64_t*>(raw_data + start_idx);
-            result = static_cast<T>(*d << block_offset);
+            uint64_t d = (static_cast<uint64_t>(raw_data[start_idx + 0]) << 56) | (static_cast<uint64_t>(raw_data[start_idx + 1]) << 48)
+                         | (static_cast<uint64_t>(raw_data[start_idx + 2]) << 40) | (static_cast<uint64_t>(raw_data[start_idx + 3]) << 32)
+                         | (static_cast<uint64_t>(raw_data[start_idx + 4]) << 24) | (static_cast<uint64_t>(raw_data[start_idx + 5]) << 16)
+                         | (static_cast<uint64_t>(raw_data[start_idx + 6]) << 8) | (static_cast<uint64_t>(raw_data[start_idx + 7]));
+            d = d << block_offset;
+            d = d >> (64 - length);
+            result = static_cast<T>(d);
             break;
         }
     }
 
-    size_t type_size = sizeof(T) * 8;
-    result = result >> (type_size - length);
+#ifdef DEBUG
+    std::cout << "read_bits(" << start_bit << ", " << length << "): " << (uint16_t) result << "\n";
+#endif
     return result;
 }
 
@@ -69,12 +86,81 @@ struct operator_packet : public base_packet {
     std::vector<base_packet*> packets;
 };
 
-literal_packet* read_literal() {
-    return nullptr;
+base_packet* read_packet(const bits_transmission& input, size_t &p);
+
+literal_packet* read_literal(const bits_transmission& input, size_t &p, uint8_t version, uint8_t type) {
+    literal_packet* packet = new literal_packet;
+    packet->version = version;
+    packet->type = type;
+    packet->literal = 0;
+
+    uint8_t block_count { 0 };
+    uint8_t block { 0 };
+    do {
+        block = read_bits<uint8_t>(p, 5, input);
+        p += 5;
+        packet->literal = (packet->literal << 4) | (block & 0xF);
+        block_count++;
+    } while ((block & 0b10000) != 0);
+
+#ifdef DEBUG
+    std::cout << "read_literal: version=" << (uint16_t) version << ", type=" << (uint16_t) type << ", literal=" << packet->literal << '\n';
+#endif
+
+    assert(block_count <= 16);
+
+    return packet;
 }
 
-operator_packet* read_operator() {
-    return nullptr;
+operator_packet* read_operator(const bits_transmission& input, size_t &p, uint8_t version, uint8_t type) {
+    operator_packet* packet = new operator_packet;
+    packet->version = version;
+    packet->type = type;
+    packet->length_type = read_bits<uint8_t>(p, 1, input);
+    p += 1;
+
+    if (packet->length_type == 0) {
+        uint16_t contained_packets_size = read_bits<uint16_t>(p, 15, input);
+        p += 15;
+
+        size_t packet_end = p + contained_packets_size;
+#ifdef DEBUG
+        std::cout << "read_operator: length_type=" << (uint16_t) packet->length_type << ", contained_packets_size=" << contained_packets_size << '\n';
+#endif
+        while (p < packet_end) {
+            base_packet* contained_packet = read_packet(input, p);
+            packet->packets.emplace_back(contained_packet);
+        }
+
+        assert(p == packet_end);
+    } else {
+        uint16_t contained_packets = read_bits<uint16_t>(p, 11, input);
+        p += 11;
+#ifdef DEBUG
+        std::cout << "read_operator: length_type=" << (uint16_t) packet->length_type << ", contained_packets=" << contained_packets << '\n';
+#endif
+        while (contained_packets--) {
+            base_packet* contained_packet = read_packet(input, p);
+            packet->packets.emplace_back(contained_packet);
+        }
+    }
+
+    return packet;
+}
+
+base_packet* read_packet(const bits_transmission& input, size_t &p) {
+#ifdef DEBUG
+    std::cout << "Reading packet...\n";
+#endif
+
+    uint8_t version = read_bits<uint8_t>(p, 3, input);
+    uint8_t type = read_bits<uint8_t>(p + 3, 3, input);
+
+    p += 6;
+    if (type == 4)
+        return read_literal(input, p, version, type);
+    else
+        return read_operator(input, p, version, type);
 }
 
 day_t parseInput(std::string &input) {
@@ -122,14 +208,97 @@ day_t parseInput(std::string &input) {
 
 std::string runPart1(day_t& input) {
     std::stringstream output;
+    size_t p { 0 };
+    operator_packet* packet = (operator_packet*) read_packet(input, p);
 
-    auto b = read_bits<uint8_t>(0, 6, input);
+    std::deque<base_packet*> queue;
+    queue.push_back(packet);
+
+    uint32_t version_sum { 0 };
+    while (!queue.empty()) {
+        base_packet* p = queue.front();
+        version_sum += p->version;
+        if (p->type != 4) {
+            for (base_packet* cp : ((operator_packet*) p)->packets) {
+                queue.push_back(cp);
+            }
+        }
+
+        queue.pop_front();
+    }
+
+    output << version_sum;
 
     return output.str();
 }
 
+uint64_t packet_value(base_packet* base) {
+    if (base->type == 4) {
+        literal_packet* p = (literal_packet*) base;
+        return p->literal;
+    }
+
+    uint64_t value { 0 };
+    operator_packet* p = (operator_packet*) base;
+    switch (p->type) {
+        // SUM
+        case 0:
+            for (base_packet* sub_packet : p->packets)
+                value += packet_value(sub_packet);
+            break;
+        // MUL
+        case 1:
+            value = 1;
+            for (base_packet* sub_packet : p->packets)
+                value *= packet_value(sub_packet);
+            break;
+        // MIN
+        case 2:
+            value = packet_value(p->packets[0]);
+            for (base_packet* sub_packet : p->packets)
+                value = std::min(value, packet_value(sub_packet));
+            break;
+        // MAX
+        case 3:
+            value = packet_value(p->packets[0]);
+            for (base_packet* sub_packet : p->packets)
+                value = std::max(value, packet_value(sub_packet));
+            break;
+        // GREATER THAN
+        case 5:
+            assert(p->packets.size() == 2);
+            if (packet_value(p->packets[0]) > packet_value(p->packets[1]))
+                value = 1;
+            else
+                value = 0;
+            break;
+        // LESS THAN
+        case 6:
+            assert(p->packets.size() == 2);
+            if (packet_value(p->packets[0]) < packet_value(p->packets[1]))
+                value = 1;
+            else
+                value = 0;
+            break;
+        // EQUAL
+        case 7:
+            assert(p->packets.size() == 2);
+            if (packet_value(p->packets[0]) == packet_value(p->packets[1]))
+                value = 1;
+            else
+                value = 0;
+            break;
+    }
+
+    return value;
+}
+
 std::string runPart2(day_t& input) {
     std::stringstream output;
+    size_t p { 0 };
+    operator_packet* packet = (operator_packet*) read_packet(input, p);
+    uint64_t value = packet_value(packet);
+    output << value;
 
     return output.str();
 }
