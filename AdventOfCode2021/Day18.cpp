@@ -3,13 +3,20 @@
 #include <chrono>
 #include <sstream>
 #include <iterator>
+#include <utility>
 #include <vector>
 #include <memory>
 #include <cassert>
 
 #define TITLE "Day 18"
+#define DEBUG
+
+enum side { ROOT, LEFT, RIGHT };
 
 struct snailfish_number {
+    std::shared_ptr<snailfish_number> parent;
+    side side { ROOT };
+
     std::shared_ptr<snailfish_number> left;
     uint16_t left_number;
 
@@ -33,9 +40,33 @@ struct snailfish_number {
 
 std::vector<std::string> tokenize(const std::string &input, const std::string &separator);
 typedef std::vector<std::shared_ptr<snailfish_number>> day_t;
+typedef std::shared_ptr<snailfish_number> snailfish_ptr;
+
+#ifdef DEBUG
+void print_snailfish(const snailfish_ptr &ptr) {
+    if (!ptr) {
+        std::cout << "[null]";
+        return;
+    }
+
+    std::cout << '[';
+    if (ptr->hasLeftTree())
+        print_snailfish(ptr->left);
+    else
+        std::cout << ptr->left_number;
+
+    std::cout << ',';
+    if (ptr->hasRightTree())
+        print_snailfish(ptr->right);
+    else
+        std::cout << ptr->right_number;
+
+    std::cout << ']';
+}
+#endif
 
 std::shared_ptr<snailfish_number> parse_number(std::stringstream &stream) {
-    std::shared_ptr<snailfish_number> ptr = std::make_shared<snailfish_number>();
+    snailfish_ptr ptr = std::make_shared<snailfish_number>();
     char c;
 
     // parse left side
@@ -44,6 +75,8 @@ std::shared_ptr<snailfish_number> parse_number(std::stringstream &stream) {
         ptr->left_number = c - '0';
     } else if (c == '[') {
         ptr->left = parse_number(stream);
+        ptr->left->parent = ptr;
+        ptr->left->side = LEFT;
     }
 
     // expect comma here
@@ -56,6 +89,8 @@ std::shared_ptr<snailfish_number> parse_number(std::stringstream &stream) {
         ptr->right_number = c - '0';
     } else if (c == '[') {
         ptr->right = parse_number(stream);
+        ptr->right->parent = ptr;
+        ptr->right->side = RIGHT;
     }
 
     // expect closing bracket
@@ -67,27 +102,133 @@ std::shared_ptr<snailfish_number> parse_number(std::stringstream &stream) {
 
 day_t parseInput(std::string &input) {
     day_t parsed;
-    input = "[[[5,[9,2]],[9,0]],[[5,[5,7]],4]]\n";
+    input = "[[[[[9,8],1],2],3],4]\n";
     std::stringstream stream(input);
 
-    int line {1};
     char c;
     while (stream) {
-        stream.get(c);
+        if (!stream.get(c))
+            break;
+
         assert(c == '[');
-        std::shared_ptr<snailfish_number> ptr = parse_number(stream);
+        snailfish_ptr ptr = parse_number(stream);
         parsed.push_back(std::move(ptr));
 
-        stream.get(c);
-        assert(c == '\n' || c == std::stringstream::traits_type::eof());
-        line++;
+        if (!stream.get(c))
+            break;
+
+        assert(c == '\n');
     }
 
     return parsed;
 }
 
+size_t snailfish_depth(const snailfish_ptr &ptr) {
+    if (!ptr)
+        return 0;
+
+    return 1 + std::max(snailfish_depth(ptr->left), snailfish_depth(ptr->right));
+}
+
+bool snailfish_explode(snailfish_ptr &root) {
+#ifdef DEBUG
+    std::cout << "Testing for explode: ";
+    print_snailfish(root);
+    std::cout << '\n';
+#endif
+    size_t depth = snailfish_depth(root);
+#ifdef DEBUG
+    std::cout << "depth of snailfish number: " << depth << '\n';
+#endif
+
+    // nothing to explode (root nodes counts towards depth)
+    if (depth < 5)
+        return false;
+
+    int current_depth = 1;
+    snailfish_ptr explode_target = root;
+    while (explode_target->hasRightTree() || explode_target->hasLeftTree()) {
+        size_t left_depth = snailfish_depth(explode_target->left);
+        size_t right_depth = snailfish_depth(explode_target->right);
+        if (left_depth >= right_depth)
+            explode_target = explode_target->left;
+        else
+            explode_target = explode_target->right;
+    }
+
+#ifdef DEBUG
+    // target for exploding
+    print_snailfish(explode_target);
+#endif
+
+    std::shared_ptr<snailfish_number> target_left;
+    {
+        // move up until we have the option to go left (not ascending from the left node)
+        snailfish_ptr c = explode_target->parent;
+        while (c && c->side == LEFT)
+            c = c->parent;
+
+        // if we can go left again at one point we do
+        if (c) {
+            c = c->left;
+
+            // descent node as far as possible
+            while (c && c->right)
+                c = c->right;
+
+            target_left = c;
+        }
+    }
+
+    std::shared_ptr<snailfish_number> target_right;
+    {
+        // move up until we have the option to move right (not ascending from right node)
+        snailfish_ptr c = explode_target->parent;
+        while (c && c->side == RIGHT)
+            c = c->parent;
+
+        // if we can go right again at one point we do
+        if (c) {
+            c = c->right;
+
+            // descent node as far as possible
+            while (c && c->left)
+                c = c->left;
+
+            target_right = c;
+        }
+    }
+
+    // explode node
+
+    return true;
+}
+
+bool snailfish_split(std::shared_ptr<snailfish_number> &ptr) {
+    return false;
+}
+
+void snailfish_reduce(std::shared_ptr<snailfish_number> &ptr) {
+
+}
+
+std::shared_ptr<snailfish_number> snailfish_add(std::shared_ptr<snailfish_number> left, std::shared_ptr<snailfish_number> right) {
+    std::shared_ptr<snailfish_number> added_number = std::make_shared<snailfish_number>();
+
+    added_number->left = std::move(left);
+    added_number->left->parent = added_number;
+    added_number->left->side = LEFT;
+    added_number->right = std::move(right);
+    added_number->right->parent = added_number;
+    added_number->right->side = RIGHT;
+
+    return added_number;
+}
+
 std::string runPart1(day_t& input) {
     std::stringstream output;
+
+    snailfish_explode(input[0]);
 
     return output.str();
 }
