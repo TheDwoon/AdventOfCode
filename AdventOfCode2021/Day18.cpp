@@ -11,11 +11,11 @@
 #define TITLE "Day 18"
 #define DEBUG
 
-enum side { ROOT, LEFT, RIGHT };
+enum side_t { ROOT, LEFT, RIGHT };
 
 struct snailfish_number {
     std::shared_ptr<snailfish_number> parent;
-    side side { ROOT };
+    side_t side {ROOT };
 
     std::shared_ptr<snailfish_number> left;
     uint16_t left_number;
@@ -69,7 +69,7 @@ std::shared_ptr<snailfish_number> parse_number(std::stringstream &stream) {
     snailfish_ptr ptr = std::make_shared<snailfish_number>();
     char c;
 
-    // parse left side
+    // parse left side_t
     stream.get(c);
     if (c >= '0' && c <= '9') {
         ptr->left_number = c - '0';
@@ -83,7 +83,7 @@ std::shared_ptr<snailfish_number> parse_number(std::stringstream &stream) {
     stream.get(c);
     assert(c == ',');
 
-    // parse right side
+    // parse right side_t
     stream.get(c);
     if (c >= '0' && c <= '9') {
         ptr->right_number = c - '0';
@@ -102,7 +102,7 @@ std::shared_ptr<snailfish_number> parse_number(std::stringstream &stream) {
 
 day_t parseInput(std::string &input) {
     day_t parsed;
-    input = "[[[[[9,8],1],2],3],4]\n";
+    input = "[[[[[9,8],1],2],3],4]\n[7,[6,[5,[4,[3,2]]]]]\n[[6,[5,[4,[3,2]]]],1]\n[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]\n[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]\n";
     std::stringstream stream(input);
 
     char c;
@@ -159,22 +159,27 @@ bool snailfish_explode(snailfish_ptr &root) {
 #ifdef DEBUG
     // target for exploding
     print_snailfish(explode_target);
+    std::cout << '\n';
 #endif
+
+    assert(explode_target && !explode_target->hasLeftTree() && !explode_target->hasRightTree());
 
     std::shared_ptr<snailfish_number> target_left;
     {
         // move up until we have the option to go left (not ascending from the left node)
         snailfish_ptr c = explode_target->parent;
-        while (c && c->side == LEFT)
+        while (c && c->side == LEFT && c->side != ROOT)
             c = c->parent;
 
         // if we can go left again at one point we do
-        if (c) {
-            c = c->left;
+        if (c && c->side != ROOT) {
+            if (c->hasLeftTree()) {
+                c = c->left;
 
-            // descent node as far as possible
-            while (c && c->right)
-                c = c->right;
+                // descent node as far as possible
+                while (c && c->right)
+                    c = c->right;
+            }
 
             target_left = c;
         }
@@ -184,22 +189,61 @@ bool snailfish_explode(snailfish_ptr &root) {
     {
         // move up until we have the option to move right (not ascending from right node)
         snailfish_ptr c = explode_target->parent;
-        while (c && c->side == RIGHT)
+        while (c && c->side == RIGHT && c->side != ROOT)
             c = c->parent;
 
         // if we can go right again at one point we do
-        if (c) {
-            c = c->right;
+        if (c && c->side != ROOT) {
+            // if it has a subtree we need to descent it. If it doesn't have a subtree we do not need to descend
+            if (c->hasRightTree()) {
+                c = c->right;
 
-            // descent node as far as possible
-            while (c && c->left)
-                c = c->left;
+                // descent node as far as possible
+                while (c && c->left)
+                    c = c->left;
+            }
 
             target_right = c;
         }
     }
 
+#ifdef DEBUG
+    std::cout << "Left explode target: ";
+    print_snailfish(target_left);
+    std::cout << "\nRight explode target: ";
+    print_snailfish(target_right);
+    std::cout << "\n";
+#endif
+
     // explode node
+    if (target_left) {
+        if (explode_target->side == LEFT)
+            target_left->right_number += explode_target->left_number;
+        else
+            target_left->left_number += explode_target->left_number;
+    }
+
+    if (target_right) {
+        if (explode_target->side == RIGHT)
+            target_right->left_number += explode_target->right_number;
+        else
+            target_right->right_number += explode_target->right_number;
+    }
+
+    assert(explode_target->side == LEFT || explode_target->side == RIGHT);
+    if (explode_target->side == LEFT) {
+        explode_target->parent->left = snailfish_ptr();
+        explode_target->parent->left_number = 0;
+    } else {
+        explode_target->parent->right = snailfish_ptr();
+        explode_target->parent->right_number = 0;
+    }
+
+#ifdef DEBUG
+    std::cout << "After explode: ";
+    print_snailfish(root);
+    std::cout << '\n';
+#endif
 
     return true;
 }
@@ -228,7 +272,10 @@ std::shared_ptr<snailfish_number> snailfish_add(std::shared_ptr<snailfish_number
 std::string runPart1(day_t& input) {
     std::stringstream output;
 
-    snailfish_explode(input[0]);
+    for (snailfish_ptr& p : input) {
+        snailfish_explode(p);
+        std::cout << "###########\n";
+    }
 
     return output.str();
 }
