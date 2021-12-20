@@ -164,71 +164,70 @@ bool snailfish_explode(snailfish_ptr &root) {
 
     assert(explode_target && !explode_target->hasLeftTree() && !explode_target->hasRightTree());
 
-    std::shared_ptr<snailfish_number> target_left;
+    uint16_t* target_left{nullptr};
     {
         // move up until we have the option to go left (not ascending from the left node)
-        snailfish_ptr c = explode_target->parent;
-        while (c && c->side == LEFT && c->side != ROOT)
+        snailfish_ptr c = explode_target;
+        while (c && (c->side == LEFT || c->side == ROOT) && c->hasLeftTree())
             c = c->parent;
 
-        // if we can go left again at one point we do
-        if (c && c->side != ROOT) {
-            if (c->hasLeftTree()) {
-                c = c->left;
-
-                // descent node as far as possible
-                while (c && c->right)
-                    c = c->right;
-            }
-
-            target_left = c;
+        if (c && c->side == RIGHT) {
+            c = c->parent;
         }
-    }
 
-    std::shared_ptr<snailfish_number> target_right;
-    {
-        // move up until we have the option to move right (not ascending from right node)
-        snailfish_ptr c = explode_target->parent;
-        while (c && c->side == RIGHT && c->side != ROOT)
-            c = c->parent;
-
-        // if we can go right again at one point we do
-        if (c && c->side != ROOT) {
-            // if it has a subtree we need to descent it. If it doesn't have a subtree we do not need to descend
-            if (c->hasRightTree()) {
+        if (c && c->hasLeftTree()) {
+            c = c->left;
+            while (c->hasRightTree())
                 c = c->right;
 
-                // descent node as far as possible
-                while (c && c->left)
-                    c = c->left;
-            }
-
-            target_right = c;
+            target_left = &(c->right_number);
+        } else if (c) {
+            target_left = &(c->left_number);
         }
     }
-
 #ifdef DEBUG
-    std::cout << "Left explode target: ";
-    print_snailfish(target_left);
-    std::cout << "\nRight explode target: ";
-    print_snailfish(target_right);
-    std::cout << "\n";
+    if (target_left) {
+        std::cout << "Left target found: " << *target_left << '\n';
+    } else {
+        std::cout << "No left target found!\n";
+    }
+#endif
+
+    uint16_t* target_right {nullptr};
+    {
+        // move up until we have the option to move right (not ascending from right node)
+        snailfish_ptr c = explode_target;
+        while (c && (c->side == RIGHT || c->side == ROOT))
+            c = c->parent;
+
+        if (c && c->side == LEFT) {
+            c = c->parent;
+        }
+
+        if (c && c->hasRightTree()) {
+            c = c->right;
+            while (c->hasLeftTree())
+                c = c->left;
+
+            target_right = &(c->left_number);
+        } else if (c) {
+            target_right = &(c->right_number);
+        }
+    }
+#ifdef DEBUG
+    if (target_right) {
+        std::cout << "Right target found: " << *target_right << '\n';
+    } else {
+        std::cout << "No right target found!\n";
+    }
 #endif
 
     // explode node
-    if (target_left) {
-        if (explode_target->side == LEFT)
-            target_left->right_number += explode_target->left_number;
-        else
-            target_left->left_number += explode_target->left_number;
-    }
+    if (target_right)
+        *target_right += explode_target->right_number;
 
-    if (target_right) {
-        if (explode_target->side == RIGHT)
-            target_right->left_number += explode_target->right_number;
-        else
-            target_right->right_number += explode_target->right_number;
-    }
+    if (target_left)
+        *target_left += explode_target->left_number;
 
     assert(explode_target->side == LEFT || explode_target->side == RIGHT);
     if (explode_target->side == LEFT) {
