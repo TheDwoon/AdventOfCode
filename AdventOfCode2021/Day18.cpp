@@ -7,6 +7,7 @@
 #include <vector>
 #include <memory>
 #include <cassert>
+#include <deque>
 
 #define TITLE "Day 18"
 #define DEBUG
@@ -102,7 +103,7 @@ std::shared_ptr<snailfish_number> parse_number(std::stringstream &stream) {
 
 day_t parseInput(std::string &input) {
     day_t parsed;
-    input = "[[[[[9,8],1],2],3],4]\n[7,[6,[5,[4,[3,2]]]]]\n[[6,[5,[4,[3,2]]]],1]\n[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]\n[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]\n";
+    // input = "[[[[[9,8],1],2],3],4]\n[7,[6,[5,[4,[3,2]]]]]\n[[6,[5,[4,[3,2]]]],1]\n[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]\n[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]\n";
     std::stringstream stream(input);
 
     char c;
@@ -248,11 +249,37 @@ bool snailfish_explode(snailfish_ptr &root) {
 }
 
 bool snailfish_split(std::shared_ptr<snailfish_number> &ptr) {
-    return false;
+    bool result {false};
+
+    if (ptr->left_number > 9) {
+        assert(!ptr->left);
+        snailfish_ptr split = std::make_shared<snailfish_number>();
+        split->left_number = ptr->left_number / 2;
+        split->right_number = (ptr->left_number + 1) / 2;
+        ptr->left_number = 0;
+        ptr->left = split;
+        return true;
+    } else if (ptr->left) {
+        result = snailfish_split(ptr->left);
+    }
+
+    if (ptr->right_number > 9) {
+        assert(!ptr->right);
+        snailfish_ptr split = std::make_shared<snailfish_number>();
+        split->left_number = ptr->right_number / 2;
+        split->right_number = (ptr->right_number + 1) / 2;
+        ptr->right_number = 0;
+        ptr->right = split;
+        return true;
+    } else if (!result && ptr->right) {
+        result = snailfish_split(ptr->right);
+    }
+
+    return result;
 }
 
-void snailfish_reduce(std::shared_ptr<snailfish_number> &ptr) {
-
+void snailfish_reduce(std::shared_ptr<snailfish_number> &root) {
+    while (snailfish_explode(root) || snailfish_split(root));
 }
 
 std::shared_ptr<snailfish_number> snailfish_add(std::shared_ptr<snailfish_number> left, std::shared_ptr<snailfish_number> right) {
@@ -271,9 +298,20 @@ std::shared_ptr<snailfish_number> snailfish_add(std::shared_ptr<snailfish_number
 std::string runPart1(day_t& input) {
     std::stringstream output;
 
-    for (snailfish_ptr& p : input) {
-        snailfish_explode(p);
-        std::cout << "###########\n";
+    snailfish_ptr sum = snailfish_add(input[0], input[1]);
+    snailfish_reduce(sum);
+#ifdef DEBUG
+    print_snailfish(sum);
+    std::cout << '\n';
+#endif
+
+    for (size_t i = 2; i < input.size(); i++) {
+        sum = snailfish_add(sum, input[i]);
+        snailfish_reduce(sum);
+#ifdef DEBUG
+        print_snailfish(sum);
+        std::cout << '\n';
+#endif
     }
 
     return output.str();
