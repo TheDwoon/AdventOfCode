@@ -103,7 +103,8 @@ std::shared_ptr<snailfish_number> parse_number(std::stringstream &stream) {
 
 day_t parseInput(std::string &input) {
     day_t parsed;
-    // input = "[[[[[9,8],1],2],3],4]\n[7,[6,[5,[4,[3,2]]]]]\n[[6,[5,[4,[3,2]]]],1]\n[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]\n[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]\n";
+//    input = "[[[[[9,8],1],2],3],4]\n[7,[6,[5,[4,[3,2]]]]]\n[[6,[5,[4,[3,2]]]],1]\n[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]\n[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]\n";
+    input = "[[[[4,3],4],4],[7,[[8,4],9]]]\n[1,1]\n";
     std::stringstream stream(input);
 
     char c;
@@ -132,15 +133,7 @@ size_t snailfish_depth(const snailfish_ptr &ptr) {
 }
 
 bool snailfish_explode(snailfish_ptr &root) {
-#ifdef DEBUG
-    std::cout << "Testing for explode: ";
-    print_snailfish(root);
-    std::cout << '\n';
-#endif
     size_t depth = snailfish_depth(root);
-#ifdef DEBUG
-    std::cout << "depth of snailfish number: " << depth << '\n';
-#endif
 
     // nothing to explode (root nodes counts towards depth)
     if (depth < 5)
@@ -162,14 +155,14 @@ bool snailfish_explode(snailfish_ptr &root) {
     print_snailfish(explode_target);
     std::cout << '\n';
 #endif
-
+    assert(explode_target->side == LEFT || explode_target->side == RIGHT);
     assert(explode_target && !explode_target->hasLeftTree() && !explode_target->hasRightTree());
 
     uint16_t* target_left{nullptr};
     {
         // move up until we have the option to go left (not ascending from the left node)
         snailfish_ptr c = explode_target;
-        while (c && (c->side == LEFT || c->side == ROOT) && c->hasLeftTree())
+        while (c && (c->side == LEFT || c->side == ROOT))
             c = c->parent;
 
         if (c && c->side == RIGHT) {
@@ -230,7 +223,6 @@ bool snailfish_explode(snailfish_ptr &root) {
     if (target_left)
         *target_left += explode_target->left_number;
 
-    assert(explode_target->side == LEFT || explode_target->side == RIGHT);
     if (explode_target->side == LEFT) {
         explode_target->parent->left = snailfish_ptr();
         explode_target->parent->left_number = 0;
@@ -254,6 +246,8 @@ bool snailfish_split(std::shared_ptr<snailfish_number> &ptr) {
     if (ptr->left_number > 9) {
         assert(!ptr->left);
         snailfish_ptr split = std::make_shared<snailfish_number>();
+        split->side = LEFT;
+        split->parent = ptr;
         split->left_number = ptr->left_number / 2;
         split->right_number = (ptr->left_number + 1) / 2;
         ptr->left_number = 0;
@@ -266,6 +260,8 @@ bool snailfish_split(std::shared_ptr<snailfish_number> &ptr) {
     if (ptr->right_number > 9) {
         assert(!ptr->right);
         snailfish_ptr split = std::make_shared<snailfish_number>();
+        split->side = RIGHT;
+        split->parent = ptr;
         split->left_number = ptr->right_number / 2;
         split->right_number = (ptr->right_number + 1) / 2;
         ptr->right_number = 0;
@@ -279,7 +275,13 @@ bool snailfish_split(std::shared_ptr<snailfish_number> &ptr) {
 }
 
 void snailfish_reduce(std::shared_ptr<snailfish_number> &root) {
-    while (snailfish_explode(root) || snailfish_split(root));
+    while (snailfish_explode(root) || snailfish_split(root)) {
+#ifdef DEBUG
+        std::cout << " => ";
+        print_snailfish(root);
+        std::cout << '\n';
+#endif
+    }
 }
 
 std::shared_ptr<snailfish_number> snailfish_add(std::shared_ptr<snailfish_number> left, std::shared_ptr<snailfish_number> right) {
@@ -291,6 +293,12 @@ std::shared_ptr<snailfish_number> snailfish_add(std::shared_ptr<snailfish_number
     added_number->right = std::move(right);
     added_number->right->parent = added_number;
     added_number->right->side = RIGHT;
+
+#ifdef DEBUG
+    std::cout << "After addition: ";
+    print_snailfish(added_number);
+    std::cout << '\n';
+#endif
 
     return added_number;
 }
@@ -319,6 +327,10 @@ std::string runPart1(day_t& input) {
 
 std::string runPart2(day_t& input) {
     std::stringstream output;
+
+//    for (auto i : input) {
+//        snailfish_explode(i);
+//    }
 
     return output.str();
 }
