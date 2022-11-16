@@ -2,6 +2,7 @@ create or replace package body aoc as
     --
     g_package varchar2(64) := 'aoc';
     --
+    g_batch_id number := null;
     g_year number := null;
     g_day number := null;
     g_version number := null;
@@ -32,6 +33,8 @@ create or replace package body aoc as
         --
     begin
         --
+        g_batch_id := aoc_debug_s.nextval;
+        --
         g_year := p_year;
         g_day := p_day;
         --
@@ -40,6 +43,8 @@ create or replace package body aoc as
         else
             g_version := p_version;
         end if;
+        --
+        debug(g_package, 'init', g_year || ': day ' || g_day || ' @' || g_version);
         --
     end init;
     --
@@ -50,12 +55,18 @@ create or replace package body aoc as
         p_level in number default 10
     ) is
         --
+        pragma autonomous_transaction;
         --
     begin
         --
         if p_message is not null then
             --
-            dbms_output.PUT_LINE(p_package || '.' || p_method || ': ' || p_message);
+            dbms_output.PUT_LINE('[' || g_batch_id || '] ' || p_package || '.' || p_method || ': ' || p_message);
+            --
+            insert into aoc_debug (LOG_ID, BATCH_ID, PACKAGE, METHOD, MESSAGE, LOG_LEVEL)
+            values (aoc_debug_s.nextval, g_batch_id, p_package, p_method, p_message, p_level);
+            --
+            COMMIT;
             --
         end if;
         --
