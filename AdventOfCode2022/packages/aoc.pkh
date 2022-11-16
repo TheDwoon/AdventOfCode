@@ -1,0 +1,26 @@
+create or replace package aoc as
+    --
+    type input_r is record
+                    (
+                        year    number,
+                        day     number,
+                        line    number,
+                        content varchar2(4000)
+                    );
+    --
+    type input_t is table of input_r index by binary_integer;
+    --
+    --
+    procedure load_input(
+        p_year IN NUMBER,
+        p_day IN NUMBER,
+        p_line IN NUMBER,
+        p_content IN VARCHAR2
+    );
+    --
+    function get_input(
+        p_year IN NUMBER,
+        p_day IN NUMBER
+    ) return input_t;
+    --
+end;
