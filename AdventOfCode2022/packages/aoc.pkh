@@ -11,16 +11,32 @@ create or replace package aoc as
     type input_t is table of input_r index by binary_integer;
     --
     --
-    procedure load_input(
-        p_year IN NUMBER,
-        p_day IN NUMBER,
-        p_line IN NUMBER,
-        p_content IN VARCHAR2
+    procedure init(
+        p_year in number,
+        p_day in number,
+        p_version in number
     );
     --
-    function get_input(
-        p_year IN NUMBER,
-        p_day IN NUMBER
-    ) return input_t;
+    procedure debug(
+        p_package in varchar2,
+        p_method in varchar2,
+        p_message in varchar2,
+        p_level in number default 10
+    );
+    --
+    procedure load_input(
+        p_line in number,
+        p_content in varchar2
+    );
+    --
+    procedure load_input(
+        p_year in number,
+        p_day in number,
+        p_version in number,
+        p_line in number,
+        p_content in varchar2
+    );
+    --
+    function get_input return input_t;
     --
 end;
