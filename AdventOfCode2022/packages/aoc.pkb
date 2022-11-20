@@ -9,7 +9,7 @@ create or replace package body aoc as
     --
     cursor cs_input(cp_year in number, cp_day in number, cp_version in number) is
         select year, day, line, content
-        from aoc_input
+        from aoc_input_all
         where year = cp_year
           and day = cp_day
           and version = cp_version
@@ -17,7 +17,7 @@ create or replace package body aoc as
     --
     cursor cs_input_line(cp_year in number, cp_day in number, cp_version in number, cp_line in number) is
         select year, day, line, content
-        from aoc_input
+        from aoc_input_all
         where year = cp_year
           and day = cp_day
           and version = cp_version
@@ -103,7 +103,7 @@ create or replace package body aoc as
         --
         if r_input.year is null then
             --
-            insert into aoc_input (year, day, version, line, content)
+            insert into aoc_input_all (year, day, version, line, content)
             values (p_year, p_day, p_version, p_line, p_content);
             --
             debug(g_package, l_method, 'inserted line: '
@@ -116,7 +116,7 @@ create or replace package body aoc as
             --
         else
             --
-            update aoc_input
+            update aoc_input_all
             set content = p_content
             where year = p_year
               and day = p_day
@@ -160,6 +160,15 @@ create or replace package body aoc as
     begin
         --
         t_input := get_input(g_year, g_day, g_version);
+        --
+    end get_input;
+    --
+    procedure get_input is
+        --
+        --
+    begin
+        --
+        NULL;
         --
     end get_input;
     --

@@ -39,4 +39,6 @@ create or replace package aoc as
     --
     function get_input return input_t;
     --
+    procedure get_input;
+    --
 end;
