@@ -7,6 +7,8 @@ create or replace package body aoc as
     g_day number := null;
     g_version number := null;
     --
+    g_line number := null;
+    --
     cursor cs_input(cp_year in number, cp_day in number, cp_version in number) is
         select year, day, line, content
         from aoc_input_all
@@ -32,6 +34,8 @@ create or replace package body aoc as
         --
         --
     begin
+        --
+        g_line := 0;
         --
         g_batch_id := aoc_debug_s.nextval;
         --
@@ -71,6 +75,19 @@ create or replace package body aoc as
         end if;
         --
     end debug;
+    --
+    procedure load_input(
+        p_content in varchar2
+    ) is
+        --
+        --
+    begin
+        --
+        g_line := g_line + 1;
+        --
+        load_input(g_line, p_content);
+        --
+    end load_input;
     --
     procedure load_input(
         p_line in number,
@@ -168,7 +185,12 @@ create or replace package body aoc as
         --
     begin
         --
-        NULL;
+        insert into aoc_input
+        select line, content
+        from aoc_input_all
+        where year = g_year
+          and DAY = g_day
+          and version = g_version;
         --
     end get_input;
     --

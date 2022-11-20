@@ -25,6 +25,10 @@ create or replace package aoc as
     );
     --
     procedure load_input(
+        p_content in varchar2
+    );
+    --
+    procedure load_input(
         p_line in number,
         p_content in varchar2
     );
