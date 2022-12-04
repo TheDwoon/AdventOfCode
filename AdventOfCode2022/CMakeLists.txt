@@ -7,5 +7,6 @@ include_directories(.)
 
 add_executable(Day01 Day01.cpp)
 add_executable(Day02 Day02.cpp)
+add_executable(Day03 Day03.cpp)
 
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -march=native")
