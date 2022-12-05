@@ -30,7 +30,7 @@ day_t parseInput(const std::string &input) {
     std::stringstream stream(input);
     std::string line;
     while (std::getline(stream, line, '\n')) {
-        if (!line.starts_with('['))
+        if (line.find('[') == std::string::npos)
             break;
 
         if (puzzle.container.empty()) {
