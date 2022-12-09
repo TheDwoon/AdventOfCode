@@ -5,7 +5,9 @@
 #include <iterator>
 #include <vector>
 #include <set>
+#include <cassert>
 
+#define RUN_TEST
 #define TITLE "Day 09"
 #define SIGN(X) ((0 < (X)) - ((X) < 0))
 #define NUM_SEGMENTS 10
@@ -28,12 +30,9 @@ struct movement {
 };
 
 inline void moveTail(const vec2i &head, vec2i &tail) {
-    if (std::abs(head.x - tail.x) > 1) {
-        tail.x = head.x - SIGN(head.x - tail.x);
-        tail.y = head.y;
-    } else if (std::abs(head.y - tail.y) > 1) {
-        tail.y = head.y - SIGN(head.y - tail.y);
-        tail.x = head.x;
+    if (std::abs(head.x - tail.x) > 1 || std::abs(head.y - tail.y) > 1) {
+        tail.x += SIGN(head.x - tail.x);
+        tail.y += SIGN(head.y - tail.y);
     }
 }
 
@@ -59,8 +58,6 @@ std::string runPart1(day_t& input) {
     vec2i tail;
 
     for (const movement &m : input) {
-        // std::cout << m.direction << " " << m.amount << "\n";
-
         for (int i = 0; i < m.amount; ++i) {
             switch (m.direction) {
                 case 'R':
@@ -80,7 +77,6 @@ std::string runPart1(day_t& input) {
             }
 
             moveTail(head, tail);
-            // std::cout << "H(" << r.head.x << "," << r.head.y << ") T(" << r.tail.x << "," << r.tail.y << ")\n";
             tailPositions.insert(tail);
         }
     }
@@ -98,8 +94,6 @@ std::string runPart2(day_t& input) {
     vec2i &tail = segments[NUM_SEGMENTS - 1];
 
     for (const movement &m : input) {
-        // std::cout << m.direction << " " << m.amount << "\n";
-
         for (int i = 0; i < m.amount; ++i) {
             switch (m.direction) {
                 case 'R':
@@ -121,7 +115,7 @@ std::string runPart2(day_t& input) {
             for (int j = 0; j < NUM_SEGMENTS - 1; ++j) {
                 moveTail(segments[j], segments[j + 1]);
             }
-            // std::cout << "H(" << r.head.x << "," << r.head.y << ") T(" << r.tail.x << "," << r.tail.y << ")\n";
+
             tailPositions.insert(tail);
         }
     }
