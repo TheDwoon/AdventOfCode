@@ -101,9 +101,9 @@ day_t parseInput(std::string &input) {
     return parsed;
 }
 
-bool isOrdered(const list_packet* a, const list_packet* b) {
+int isOrdered(const list_packet* a, const list_packet* b) {
 #ifndef NDEBUG
-    std::cout << toString(a) << " vs " << toString(b) << "\n";
+    std::cout << toString(a) << " vs " << toString(b) << std::endl;
 #endif
 
     const size_t limit = std::min(a->packets.size(), b->packets.size());
@@ -116,34 +116,38 @@ bool isOrdered(const list_packet* a, const list_packet* b) {
             auto* literalB = reinterpret_cast<const literal_packet*>(subB);
 
 #ifndef NDEBUG
-            std::cout << toString(subA) << " vs " << toString(subB) << "\n";
+            std::cout << toString(subA) << " vs " << toString(subB) << std::endl;
 #endif
 
             if (literalA->value < literalB->value) {
-                return true;
+                return CORRECT_ORDER;
             } else if (literalA->value > literalB->value) {
 #ifndef NDEBUG
-                std::cout << "left side is bigger\n";
+                std::cout << "left side is bigger" << std::endl;
 #endif
-                return false;
+                return WRONG_ORDER;
             }
         } else if (subA->type == TYPE_LIST && subB->type == TYPE_LIST) {
             auto* listA = reinterpret_cast<const list_packet*>(subA);
             auto* listB = reinterpret_cast<const list_packet*>(subB);
 
-            if (!isOrdered(listA, listB)) {
+            if (isOrdered(listA, listB) == WRONG_ORDER) {
 #ifndef NDEBUG
-                std::cout << "left side is bigger\n";
+                std::cout << "left side is bigger" << std::endl;
 #endif
-                return false;
+                return WRONG_ORDER;
             }
         } else if (subA->type == TYPE_LITERAL) {
             auto* listA = new list_packet();
             listA->packets.push_back(subA);
             auto* listB = reinterpret_cast<const list_packet*>(subB);
 
-            if (!isOrdered(listA, listB))
-                return false;
+            if (isOrdered(listA, listB) == WRONG_ORDER) {
+#ifndef NDEBUG
+                std::cout << "left side is bigger" << std::endl;
+#endif
+                return WRONG_ORDER;
+            }
 
             delete listA;
         } else if (subB->type == TYPE_LITERAL) {
@@ -151,18 +155,23 @@ bool isOrdered(const list_packet* a, const list_packet* b) {
             auto* listB = new list_packet();
             listB->packets.push_back(subB);
 
-            if (!isOrdered(listA, listB)) {
+            if (isOrdered(listA, listB) == WRONG_ORDER) {
 #ifndef NDEBUG
-                std::cout << "left side is bigger\n";
+                std::cout << "left side is bigger" << std::endl;
 #endif
-                return false;
+                return WRONG_ORDER;
             }
 
             delete listB;
         }
     }
 
-    return a->packets.size() <= b->packets.size();
+    if (a->packets.size() == b->packets.size())
+        return UNDECIDED_ORDER;
+    else if (a->packets.size() < b->packets.size())
+        return CORRECT_ORDER;
+    else
+        return WRONG_ORDER;
 }
 
 std::string runPart1(day_t& input) {
@@ -173,7 +182,7 @@ std::string runPart1(day_t& input) {
         list_packet* first = input[i];
         list_packet* second = input[i + 1];
 
-        if (isOrdered(first, second)) {
+        if (isOrdered(first, second) != WRONG_ORDER) {
 #ifndef NDEBUG
             std::cout << "### Pair " << (i + 2) / 2 << " in correct order!\n";
 #endif
