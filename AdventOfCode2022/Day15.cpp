@@ -115,6 +115,7 @@ std::string runPart2(day_t& input) {
             if (!inRange) {
                 f = tuningFrequency(position);
                 output << f;
+                return output.str();
             }
         }
     }
