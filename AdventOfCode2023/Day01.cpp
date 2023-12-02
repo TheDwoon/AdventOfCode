@@ -64,6 +64,8 @@ std::string runPart2(day_t& input) {
                         first = i + 1;
                     else
                         second = i + 1;
+
+                    numbers[i] = ref_numbers[i];
                 }
             } else {
                 bool retry = numbers[i] != ref_numbers[i];
