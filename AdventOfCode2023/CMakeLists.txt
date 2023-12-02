@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 include_directories(.)
 
 add_executable(Day01 Day01.cpp)
+add_executable(Day01Y Day01Y.cpp)
 add_executable(Day02 Day02.cpp parser.cpp)
 
 
