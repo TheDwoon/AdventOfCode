@@ -36,9 +36,58 @@ std::string runPart1(day_t& input) {
     return output.str();
 }
 
+const char one[] = "one";
+const char two[] = "two";
+const char three[] = "three";
+const char four[] = "four";
+const char five[] = "five";
+const char six[] = "six";
+const char seven[] = "seven";
+const char eight[] = "eight";
+const char nine[] = "nine";
+
+const char* const ref_numbers[] = { one, two, three, four, five, six, seven, eight, nine };
+char const* numbers[] = { one, two, three, four, five, six, seven, eight, nine };
+
 std::string runPart2(day_t& input) {
     std::stringstream output;
+    int sum = 0;
 
+    int first = -1;
+    int second = -1;
+    for (const char* c = input; *c != '\0'; ++c) {
+        for (int i = 0; i < 9; i++) {
+            if (*numbers[i] == *c) {
+                ++numbers[i];
+                if (*numbers[i] == '\0') {
+                    if (first == -1)
+                        first = i + 1;
+                    else
+                        second = i + 1;
+                }
+            } else {
+                bool retry = numbers[i] != ref_numbers[i];
+                numbers[i] = ref_numbers[i];
+                i -= retry;
+            }
+        }
+
+        if (first == - 1 && *c >= '0' && *c <= '9')
+            first = *c - '0';
+        else if (*c >= '0' && *c <= '9')
+            second = *c - '0';
+        else if (*c == '\n') {
+            sum += first * 10 + (second == -1 ? first : second);
+            first = -1;
+            second = -1;
+
+            for (int i = 0; i < 9; i++) {
+                numbers[i] = ref_numbers[i];
+            }
+        }
+    }
+
+    output << sum;
     return output.str();
 }
 
