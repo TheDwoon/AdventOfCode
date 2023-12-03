@@ -81,6 +81,20 @@ public:
         return *current == '\0';
     }
 
+    [[nodiscard]] bool isNumeric() const {
+        return *current >= '0' && *current <= '9';
+    }
+
+    bool findNext(const char* str, unsigned int offset) const {
+        offset = 0;
+        while (current[offset] != '\0' && current[offset] == *str) {
+            offset++;
+            str++;
+        }
+
+        return *str == '\0';
+    }
+
     /**
      * Places a marked at the current position.
      */
