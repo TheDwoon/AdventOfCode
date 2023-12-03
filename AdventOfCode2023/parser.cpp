@@ -85,14 +85,22 @@ public:
         return *current >= '0' && *current <= '9';
     }
 
-    bool findNext(const char* str, unsigned int offset) const {
+    bool findNext(const char* str, unsigned int &offset) const {
         offset = 0;
-        while (current[offset] != '\0' && current[offset] == *str) {
-            offset++;
-            str++;
+        while (current[offset] != '\0') {
+            while (current[offset] != '\0' && current[offset] != str[0]) {
+                offset++;
+            }
+
+            for (unsigned int i = 0; current[offset + i] == str[i] || str[i] == '\0'; ++i) {
+                if (str[i] == '\0')
+                    return true;
+                else if (current[offset + i] == '\0')
+                    return false;
+            }
         }
 
-        return *str == '\0';
+        return false;
     }
 
     /**
