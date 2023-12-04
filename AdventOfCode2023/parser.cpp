@@ -50,6 +50,13 @@ public:
             return *(current++);
     }
 
+    bool consumeWhitespace() {
+        while (*current == ' ' || *current == '\t')
+            ++current;
+
+        return true;
+    }
+
     bool readNewLine() {
         const char* c = current;
         if (*c == '\r' && *(c + 1) == '\n') {
@@ -61,6 +68,21 @@ public:
         }
 
         return false;
+    }
+
+    template<typename T>
+    bool readNumber(T &i) {
+        const char* c = current;
+        while (*c >= '0' && *c <= '9') {
+            i = i * 10 + (*(c++) - '0');
+        }
+
+        if (c != current) {
+            current = c;
+            return true;
+        } else {
+            return false;
+        }
     }
 
     bool readInt(int &i) {
