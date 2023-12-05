@@ -72,6 +72,7 @@ public:
 
     template<typename T>
     bool readNumber(T &i) {
+        i = 0;
         const char* c = current;
         while (*c >= '0' && *c <= '9') {
             i = i * 10 + (*(c++) - '0');
