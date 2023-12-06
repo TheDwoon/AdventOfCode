@@ -38,7 +38,7 @@ day_t parseInput(std::string &input) {
 bool solve(uint64_t time, uint64_t distance, int &min, int &max) {
     const double a = -1;
     const double b = static_cast<double>(time);
-    const double c = -1 * static_cast<double>(distance);
+    const double c = -1 * static_cast<double>(distance + 1);
     double r = b * b - 4 * a * c;
     // d = (T - x) * x = Tx - x²
     // (-b +- sqrt(b² - 4ac)) / 2a
@@ -49,8 +49,8 @@ bool solve(uint64_t time, uint64_t distance, int &min, int &max) {
     r = std::sqrt(r);
     double x1 = (-b + r) / (2 * a);
     double x2 = (-b - r) / (2 * a);
-    min = std::floor(x1 + 1);
-    max = std::ceil(x2 - 1);
+    min = std::ceil(x1);
+    max = std::floor(x2);
     return true;
 }
 
