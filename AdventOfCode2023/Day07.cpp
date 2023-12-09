@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iterator>
 #include <vector>
+#include <algorithm>
 #include "parser.cpp"
 
 #define TITLE "Day 07"
@@ -14,11 +15,10 @@
 #define ONE_OF_A_KIND 4
 
 struct hand {
-    char card[5] {0};
+    char card[5] {0,0,0,0,0};
     int bid {0};
 
-    char pairs[5] {0};
-    char highestCard {0};
+    char pairs[5] {0,0,0,0,0};
     char grade{0};
 };
 
@@ -75,10 +75,15 @@ day_t parseInput(std::string &input) {
         h.card[3] = cardToNumber(p.read());
         h.card[4] = cardToNumber(p.read());
 
+        assert(h.card[0] >= 2 && h.card[0] <= 14);
+        assert(h.card[1] >= 2 && h.card[1] <= 14);
+        assert(h.card[2] >= 2 && h.card[2] <= 14);
+        assert(h.card[3] >= 2 && h.card[3] <= 14);
+        assert(h.card[4] >= 2 && h.card[4] <= 14);
+
         p.consume(' ');
         p.readNumber(h.bid);
         p.readNewLine();
-        std::cout << sizeof(h) << "Hellooo" << std::endl;
         result.push_back(h);
     }
 
@@ -112,7 +117,6 @@ bool isOnePair(const hand& h) {
 void gradeHand(hand& hand) {
     char cards[5] = {hand.card[0], hand.card[1], hand.card[2], hand.card[3], hand.card[4] };
     std::sort(cards, cards + 5);
-    hand.highestCard = cards[4];
 
     unsigned int i = 0;
     while (i < 5) {
@@ -122,6 +126,7 @@ void gradeHand(hand& hand) {
             count++;
         }
 
+        assert(count < 5);
         hand.pairs[count] += 1;
         i++;
     }
@@ -136,6 +141,21 @@ void gradeHand(hand& hand) {
     assert(hand.grade == 0 || hand.grade == 1 || hand.grade == 2 || hand.grade == 4 || hand.grade == 8 || hand.grade == 16 || hand.grade == 32);
 }
 
+bool compareHands(const hand& a, const hand& b) {
+    if (a.grade < b.grade) {
+        return true;
+    } else if (a.grade == b.grade) {
+        for (unsigned int i = 0; i < 5; i++) {
+            if (a.card[i] < b.card[i])
+                return true;
+        }
+
+        return false;
+    } else {
+        return false;
+    }
+}
+
 std::string runPart1(day_t& input) {
     std::stringstream output;
     uint64_t score = 0;
@@ -144,20 +164,7 @@ std::string runPart1(day_t& input) {
         gradeHand(h);
     }
 
-    std::sort(input.begin(), input.end(), [](const hand& a, const hand& b) {
-        if (a.grade < b.grade) {
-            return true;
-        } else if (a.grade == b.grade) {
-            for (unsigned int i = 0; i < 5; i++) {
-                if (a.card[i] < b.card[i])
-                    return true;
-            }
-
-            return false;
-        } else {
-            return false;
-        }
-    });
+    std::sort(input.data(), input.data() + input.size(), compareHands);
 
     for (unsigned int i = 0; i < input.size(); i++) {
         score += static_cast<uint64_t>(i + 1) * static_cast<uint64_t>(input[i].bid);
