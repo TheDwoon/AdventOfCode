@@ -12,14 +12,14 @@
 #define TWO_OF_A_KIND 1
 #define THREE_OF_A_KIND 2
 #define FOUR_OF_A_KIND 3
-#define ONE_OF_A_KIND 4
+#define FIVE_OF_A_KIND 4
 
 struct hand {
-    char card[5] {0,0,0,0,0};
-    int bid {0};
+    std::array<char, 5> card;
+    int bid;
 
-    char pairs[5] {0,0,0,0,0};
-    char grade{0};
+    std::array<char, 5> pairs;
+    char grade;
 };
 
 std::vector<std::string> tokenize(const std::string &input, const std::string &separator);
@@ -68,7 +68,7 @@ day_t parseInput(std::string &input) {
     Parser p(input.c_str());
 
     while (!p.eof()) {
-        hand h;
+        hand h {};
         h.card[0] = cardToNumber(p.read());
         h.card[1] = cardToNumber(p.read());
         h.card[2] = cardToNumber(p.read());
@@ -91,7 +91,7 @@ day_t parseInput(std::string &input) {
 }
 
 bool isFiveOfAKind(const hand& h) {
-    return h.pairs[ONE_OF_A_KIND] == 1;
+    return h.pairs[FIVE_OF_A_KIND] == 1;
 }
 
 bool isFourOfAKind(const hand& h) {
@@ -148,6 +148,8 @@ bool compareHands(const hand& a, const hand& b) {
         for (unsigned int i = 0; i < 5; i++) {
             if (a.card[i] < b.card[i])
                 return true;
+            else if (a.card[i] > b.card[i])
+                return false;
         }
 
         return false;
@@ -164,7 +166,7 @@ std::string runPart1(day_t& input) {
         gradeHand(h);
     }
 
-    std::sort(input.data(), input.data() + input.size(), compareHands);
+    std::sort(input.begin(), input.end(), compareHands);
 
     for (unsigned int i = 0; i < input.size(); i++) {
         score += static_cast<uint64_t>(i + 1) * static_cast<uint64_t>(input[i].bid);

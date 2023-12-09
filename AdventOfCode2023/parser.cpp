@@ -123,7 +123,7 @@ public:
 
     [[nodiscard]] bool isLetter() const {
         char c = *current;
-        return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z';
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
     }
 
     bool findNext(const char* str, unsigned int &offset) const {
