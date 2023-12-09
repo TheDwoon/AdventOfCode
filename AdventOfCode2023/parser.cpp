@@ -100,12 +100,30 @@ public:
         }
     }
 
+    bool readToBuffer(char* c, unsigned int num) {
+        unsigned int readBytes = 0;
+        while (current[readBytes] != '\0' && readBytes < num) {
+            c[readBytes] = current[readBytes];
+            readBytes++;
+        }
+
+        if (readBytes == num)
+            current += readBytes;
+
+        return readBytes == num;
+    }
+
     [[nodiscard]] bool eof() const {
         return *current == '\0';
     }
 
     [[nodiscard]] bool isNumeric() const {
         return *current >= '0' && *current <= '9';
+    }
+
+    [[nodiscard]] bool isLetter() const {
+        char c = *current;
+        return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z';
     }
 
     bool findNext(const char* str, unsigned int &offset) const {

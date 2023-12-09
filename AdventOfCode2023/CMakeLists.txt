@@ -13,6 +13,7 @@ add_executable(Day04 Day04.cpp parser.cpp)
 add_executable(Day05 Day05.cpp parser.cpp)
 add_executable(Day06 Day06.cpp parser.cpp)
 add_executable(Day07 Day07.cpp parser.cpp)
+add_executable(Day08 Day08.cpp parser.cpp)
 
 
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -march=native")
