@@ -14,6 +14,14 @@
 #define FOUR_OF_A_KIND 3
 #define FIVE_OF_A_KIND 4
 
+#define GRADE_FIVE_OF_A_KIND 6
+#define GRADE_FOUR_OF_A_KIND 5
+#define GRADE_FULL_HOUSE 4
+#define GRADE_THREE_OF_A_KIND 3
+#define GRADE_TWO_PAIRS 2
+#define GRADE_ONE_PAIR 1
+#define GRADE_HIGH_CARD 0
+
 struct hand {
     std::array<char, 5> card;
     int bid;
@@ -45,7 +53,7 @@ char cardToNumber(char c) {
     }
 }
 
-char NumberToCard(char c) {
+char numberToCard(char c) {
     switch (c) {
         case 14: return 'A';
         case 13: return 'K';
@@ -60,6 +68,7 @@ char NumberToCard(char c) {
         case 4: return '4';
         case 3: return '3';
         case 2: return '2';
+        case 1: return 'J';
         default: return c;
     }
 }
@@ -97,7 +106,7 @@ bool hasFiveOfAKind(const hand& h) {
             return true;
     }
 
-    return false;
+    return 5 <= h.jokers;
 }
 
 bool hasFourOfAKind(const hand& h) {
@@ -106,7 +115,7 @@ bool hasFourOfAKind(const hand& h) {
             return true;
     }
 
-    return false;
+    return 4 <= h.jokers;
 }
 
 bool hasThreeOfAKind(const hand& h) {
@@ -115,7 +124,7 @@ bool hasThreeOfAKind(const hand& h) {
             return true;
     }
 
-    return false;
+    return 3 <= h.jokers;
 }
 
 void hasThreeOfAKind(std::array<char, 5> &pairs, char &jokers) {
@@ -126,6 +135,8 @@ void hasThreeOfAKind(std::array<char, 5> &pairs, char &jokers) {
             return;
         }
     }
+
+    jokers += 3;
 }
 
 void hasTwoOfAKind(std::array<char, 5> &pairs, char &jokers) {
@@ -136,6 +147,8 @@ void hasTwoOfAKind(std::array<char, 5> &pairs, char &jokers) {
             return;
         }
     }
+
+    jokers += 2;
 }
 
 bool hasTwoPairs(const hand& h) {
@@ -172,7 +185,7 @@ void gradeHand(hand& hand) {
     while (hand.jokers < 5 && cards[hand.jokers] == 1)
         hand.jokers++;
 
-    unsigned int i = 0;
+    char i = hand.jokers;
     while (i < 5) {
         unsigned int count = 0;
         while (i < 4 && cards[i] == cards[i + 1]) {
@@ -185,12 +198,12 @@ void gradeHand(hand& hand) {
         i++;
     }
 
-    if (hasFiveOfAKind(hand)) hand.grade |= 32;
-    else if (hasFourOfAKind(hand)) hand.grade |= 16;
-    else if (hasFullHouse(hand)) hand.grade |= 8;
-    else if (hasThreeOfAKind(hand)) hand.grade |= 4;
-    else if (hasTwoPairs(hand)) hand.grade |= 2;
-    else if (hasOnePair(hand)) hand.grade |= 1;
+    if (hasFiveOfAKind(hand)) hand.grade = GRADE_FIVE_OF_A_KIND;
+    else if (hasFourOfAKind(hand)) hand.grade = GRADE_FOUR_OF_A_KIND;
+    else if (hasFullHouse(hand)) hand.grade = GRADE_FULL_HOUSE;
+    else if (hasThreeOfAKind(hand)) hand.grade = GRADE_THREE_OF_A_KIND;
+    else if (hasTwoPairs(hand)) hand.grade = GRADE_TWO_PAIRS;
+    else if (hasOnePair(hand)) hand.grade = GRADE_ONE_PAIR;
 }
 
 bool compareHands(const hand& a, const hand& b) {
@@ -210,6 +223,36 @@ bool compareHands(const hand& a, const hand& b) {
     }
 }
 
+void printGrade(char grade) {
+    switch (grade) {
+        case GRADE_FIVE_OF_A_KIND: std::cout << "FIVE_OF_A_KIND "; break;
+        case GRADE_FOUR_OF_A_KIND: std::cout << "FOUR_OF_A_KIND "; break;
+        case GRADE_FULL_HOUSE: std::cout << "FULL_HOUSE     "; break;
+        case GRADE_THREE_OF_A_KIND: std::cout << "THREE_OF_A_KIND"; break;
+        case GRADE_TWO_PAIRS: std::cout << "TWO_PAIRS      "; break;
+        case GRADE_ONE_PAIR: std::cout << "ONE_PAIR       "; break;
+        case GRADE_HIGH_CARD: std::cout << "HIGH_CARD      "; break;
+        default: std::cout << "???            "; break;
+    }
+}
+
+void printHand(const hand& h) {
+    std::cout << "Hand: [";
+    for (char c : h.card)
+        std::cout << numberToCard(c);
+    std::cout << "] Pairs: [";
+    for (char c : h.pairs)
+        std::cout << (int) c << ", ";
+    std::cout << "] grade: ";
+    printGrade(h.grade);
+    std::cout << " jokers: " << (int) h.jokers << std::endl;
+}
+
+void printHand(const day_t &hands) {
+    for (const hand &h : hands)
+        printHand(h);
+}
+
 std::string runPart1(day_t& input) {
     std::stringstream output;
     uint64_t score = 0;
@@ -219,6 +262,7 @@ std::string runPart1(day_t& input) {
     }
 
     std::sort(input.begin(), input.end(), compareHands);
+//    printHand(input);
 
     for (unsigned int i = 0; i < input.size(); i++) {
         score += static_cast<uint64_t>(i + 1) * static_cast<uint64_t>(input[i].bid);
