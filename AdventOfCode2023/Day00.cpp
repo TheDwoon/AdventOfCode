@@ -10,7 +10,8 @@
 typedef std::vector<std::string> day_t;
 
 day_t parseInput(std::string &input) {
-    return {};
+    day_t result;
+    return result;
 }
 
 std::string runPart1(day_t& input) {
