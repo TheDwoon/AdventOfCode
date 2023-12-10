@@ -62,6 +62,20 @@ int extrapolateValue(const sequence &s) {
     return value;
 }
 
+int extrapolatePreviousValue(const sequence &s) {
+    std::vector<sequence> sequences { s };
+    while (!isAllZero(sequences.back())) {
+        sequences.push_back(generateDeltaSequence(sequences.back()));
+    }
+
+    int value = 0;
+    for (int i = static_cast<int>(sequences.size()) - 2; i >= 0; i--) {
+        value = sequences[i].front() - value;
+    }
+
+    return value;
+}
+
 std::string runPart1(day_t& input) {
     std::stringstream output;
     int score = 0;
@@ -75,7 +89,12 @@ std::string runPart1(day_t& input) {
 
 std::string runPart2(day_t& input) {
     std::stringstream output;
+    int score = 0;
+    for (const sequence &s : input) {
+        score += extrapolatePreviousValue(s);
+    }
 
+    output << score;
     return output.str();
 }
 
