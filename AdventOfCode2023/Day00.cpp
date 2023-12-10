@@ -7,7 +7,6 @@
 
 #define TITLE "Day XX"
 
-std::vector<std::string> tokenize(const std::string &input, const std::string &separator);
 typedef std::vector<std::string> day_t;
 
 day_t parseInput(std::string &input) {
@@ -92,19 +91,4 @@ int main()
 	std::cout << "Running: " << formatTime(t2 - t1) << std::endl;
 	std::cout << "Total: " << formatTime(t2 - t0) << std::endl;
 	std::cout << "**************************************" << std::endl;
-}
-
-std::vector<std::string> tokenize(const std::string &input, const std::string &separator) {
-    std::vector<std::string> tokenized;
-
-    size_t pos = 0;
-    size_t tokenEnd;
-    do {
-        tokenEnd = input.find(separator, pos);
-        std::string token = input.substr(pos, (tokenEnd - pos));
-        tokenized.push_back(token);
-        pos = tokenEnd + separator.size();
-    } while(tokenEnd != std::string::npos);
-
-    return tokenized;
 }
