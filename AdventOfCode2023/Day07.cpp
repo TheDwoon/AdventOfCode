@@ -20,6 +20,7 @@ struct hand {
 
     std::array<char, 5> pairs;
     char grade;
+    char jokers;
 };
 
 std::vector<std::string> tokenize(const std::string &input, const std::string &separator);
@@ -90,33 +91,86 @@ day_t parseInput(std::string &input) {
     return result;
 }
 
-bool isFiveOfAKind(const hand& h) {
-    return h.pairs[FIVE_OF_A_KIND] == 1;
+bool hasFiveOfAKind(const hand& h) {
+    for (char j = 0; j <= FIVE_OF_A_KIND && j <= h.jokers; j++) {
+        if (h.pairs[FIVE_OF_A_KIND - j] >= 1)
+            return true;
+    }
+
+    return false;
 }
 
-bool isFourOfAKind(const hand& h) {
-    return h.pairs[FOUR_OF_A_KIND] == 1;
+bool hasFourOfAKind(const hand& h) {
+    for (char j = 0; j <= FOUR_OF_A_KIND && j <= h.jokers; j++) {
+        if (h.pairs[FOUR_OF_A_KIND - j] >= 1)
+            return true;
+    }
+
+    return false;
 }
 
-bool isFullHouse(const hand& h) {
-    return h.pairs[THREE_OF_A_KIND] == 1 && h.pairs[TWO_OF_A_KIND] == 1;
+bool hasThreeOfAKind(const hand& h) {
+    for (char j = 0; j <= THREE_OF_A_KIND && j <= h.jokers; j++) {
+        if (h.pairs[THREE_OF_A_KIND - j] >= 1)
+            return true;
+    }
+
+    return false;
 }
 
-bool isThreeOfAKind(const hand& h) {
-    return h.pairs[THREE_OF_A_KIND] == 1 && h.pairs[TWO_OF_A_KIND] == 0;
+void hasThreeOfAKind(std::array<char, 5> &pairs, char &jokers) {
+    for (char j = 0; j <= THREE_OF_A_KIND; j++) {
+        if (pairs[THREE_OF_A_KIND - j] >= 1) {
+            pairs[THREE_OF_A_KIND - j] -= 1;
+            jokers += j;
+            return;
+        }
+    }
 }
 
-bool isTwoPair(const hand& h) {
-    return h.pairs[TWO_OF_A_KIND] == 2;
+void hasTwoOfAKind(std::array<char, 5> &pairs, char &jokers) {
+    for (char j = 0; j <= TWO_OF_A_KIND; j++) {
+        if (pairs[TWO_OF_A_KIND - j] >= 1) {
+            pairs[TWO_OF_A_KIND - j] -= 1;
+            jokers += j;
+            return;
+        }
+    }
 }
 
-bool isOnePair(const hand& h) {
-    return h.pairs[TWO_OF_A_KIND] == 1 && h.pairs[THREE_OF_A_KIND] == 0;
+bool hasTwoPairs(const hand& h) {
+    std::array<char, 5> pairs = h.pairs;
+    char jokers = 0;
+    hasTwoOfAKind(pairs, jokers);
+    hasTwoOfAKind(pairs, jokers);
+    return jokers <= h.jokers;
+}
+
+bool hasFullHouse(const hand& h) {
+    std::array<char, 5> pairs = h.pairs;
+    char jokers = 0;
+    hasThreeOfAKind(pairs, jokers);
+    hasTwoOfAKind(pairs, jokers);
+    return jokers <= h.jokers;
+}
+
+bool hasOnePair(const hand& h) {
+    for (char j = 0; j <= TWO_OF_A_KIND && j <= h.jokers; j++) {
+        if (h.pairs[TWO_OF_A_KIND - j] >= 1) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void gradeHand(hand& hand) {
     char cards[5] = {hand.card[0], hand.card[1], hand.card[2], hand.card[3], hand.card[4] };
     std::sort(cards, cards + 5);
+
+    hand.jokers = 0;
+    while (hand.jokers < 5 && cards[hand.jokers] == 1)
+        hand.jokers++;
 
     unsigned int i = 0;
     while (i < 5) {
@@ -131,14 +185,12 @@ void gradeHand(hand& hand) {
         i++;
     }
 
-    if (isOnePair(hand)) hand.grade = 1;
-    if (isTwoPair(hand)) hand.grade |= 2;
-    if (isThreeOfAKind(hand)) hand.grade |= 4;
-    if (isFullHouse(hand)) hand.grade |= 8;
-    if (isFourOfAKind(hand)) hand.grade |= 16;
-    if (isFiveOfAKind(hand)) hand.grade |= 32;
-
-    assert(hand.grade == 0 || hand.grade == 1 || hand.grade == 2 || hand.grade == 4 || hand.grade == 8 || hand.grade == 16 || hand.grade == 32);
+    if (hasFiveOfAKind(hand)) hand.grade |= 32;
+    else if (hasFourOfAKind(hand)) hand.grade |= 16;
+    else if (hasFullHouse(hand)) hand.grade |= 8;
+    else if (hasThreeOfAKind(hand)) hand.grade |= 4;
+    else if (hasTwoPairs(hand)) hand.grade |= 2;
+    else if (hasOnePair(hand)) hand.grade |= 1;
 }
 
 bool compareHands(const hand& a, const hand& b) {
@@ -176,10 +228,19 @@ std::string runPart1(day_t& input) {
     return output.str();
 }
 
-std::string runPart2(day_t& input) {
-    std::stringstream output;
+void convertJokers(day_t& hands) {
+    char j = cardToNumber('J');
+    for (hand &h : hands) {
+        for (char &c : h.card) {
+            if (c == j)
+                c = 1;
+        }
+    }
+}
 
-    return output.str();
+std::string runPart2(day_t& input) {
+    convertJokers(input);
+    return runPart1(input);
 }
 
 // BOILER PLATE CODE BELOW
