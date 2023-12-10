@@ -74,9 +74,18 @@ public:
     bool readNumber(T &i) {
         i = 0;
         const char* c = current;
+        bool isNegative = false;
+        if ((*c == '-' || *c == '+') && *(c + 1) >= '0' && *(c + 1) <= '9') {
+            isNegative = *c == '-';
+            c += 1;
+        }
+
         while (*c >= '0' && *c <= '9') {
             i = i * 10 + (*(c++) - '0');
         }
+
+        if (isNegative)
+            i *= -1;
 
         if (c != current) {
             current = c;
