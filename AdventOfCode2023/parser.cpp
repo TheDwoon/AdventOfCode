@@ -135,6 +135,14 @@ public:
         return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
     }
 
+    [[nodiscard]] bool isWhitespace() const {
+        return *current == ' ' || *current == '\t';
+    }
+
+    [[nodiscard]] bool isNewLine() const {
+        return *current == '\n' || *current == '\r' && *(current + 1) == '\n';
+    }
+
     bool findNext(const char* str, unsigned int &offset) const {
         offset = 0;
         while (current[offset] != '\0') {
