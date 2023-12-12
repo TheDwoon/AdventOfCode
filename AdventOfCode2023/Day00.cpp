@@ -44,7 +44,7 @@ std::string formatTime(std::chrono::duration<long long, std::nano> t) {
         output << t.count() << "ns";
     }
     else if (t.count() < 10000000) {
-        output << t.count() / 1000 << "us";
+        output << t.count() / 1000 << "µs";
     }
     else {
         output << t.count() / 1000000 << "ms";
