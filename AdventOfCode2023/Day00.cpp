@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iterator>
 #include <vector>
+#include "parser.cpp"
 
 #define TITLE "Day XX"
 
@@ -11,6 +12,7 @@ typedef std::vector<std::string> day_t;
 
 day_t parseInput(std::string &input) {
     day_t result;
+    Parser p(input.c_str());
     return result;
 }
 
