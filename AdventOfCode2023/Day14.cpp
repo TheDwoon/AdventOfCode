@@ -50,8 +50,7 @@ day_t parseInput(std::string &input) {
     return result;
 }
 
-std::string runPart1(day_t& input) {
-    std::stringstream output;
+int tiltNorth(day_t& input) {
     int score = 0;
 
     for (int y = 0; y < input.height; y++) {
@@ -71,13 +70,120 @@ std::string runPart1(day_t& input) {
         }
     }
 
+    return score;
+}
+
+void tiltSouth(day_t& input) {
+    for (int y = input.height - 1; y >= 0; y--) {
+        for (int x = 0; x < input.width; x++) {
+            if (input(x, y) == ROUND_ROCK) {
+                int ny = y;
+                while (ny < input.height - 1 && input(x, ny + 1) == EMPTY_SPACE)
+                    ny++;
+
+                char& oldPosition = input(x, y);
+                char& newPosition = input(x, ny);
+                oldPosition = EMPTY_SPACE;
+                newPosition = ROUND_ROCK;
+            }
+        }
+    }
+}
+
+int tiltEast(day_t& input) {
+    int score = 0;
+    for (int x = input.width - 1; x >= 0; x--) {
+        for (int y = 0; y < input.height; y++) {
+            if (input(x, y) == ROUND_ROCK) {
+                int nx = x;
+                while (nx < input.width - 1 && input(nx + 1, y) == EMPTY_SPACE)
+                    nx++;
+
+                char& oldPosition = input(x, y);
+                char& newPosition = input(nx, y);
+                oldPosition = EMPTY_SPACE;
+                newPosition = ROUND_ROCK;
+
+//                score += y * input.width + nx;
+                score += input.height - y;
+            }
+        }
+    }
+
+    return score;
+}
+
+void tiltWest(day_t& input) {
+    for (int x = 0; x < input.width; x++) {
+        for (int y = 0; y < input.height; y++) {
+            if (input(x, y) == ROUND_ROCK) {
+                int nx = x;
+                while (nx > 0 && input(nx - 1, y) == EMPTY_SPACE)
+                    nx--;
+
+                char& oldPosition = input(x, y);
+                char& newPosition = input(nx, y);
+                oldPosition = EMPTY_SPACE;
+                newPosition = ROUND_ROCK;
+            }
+        }
+    }
+}
+
+std::string runPart1(day_t& input) {
+    std::stringstream output;
+    int score = tiltNorth(input);
+
     output << score;
     return output.str();
+}
+
+int findFrequency(const std::vector<int> &scores, int score, int requiredLength = 1) {
+    int i = static_cast<int>(scores.size()) - 1;
+    while (i >= 0 && scores[i] != score)
+        i--;
+
+    int firstPosition = i;
+    i--;
+    while (i >= 0 && scores[i] != score)
+        i--;
+
+    int secondPosition = i;
+    if (firstPosition >= 0 && secondPosition >= 0) {
+        int frequency = firstPosition - secondPosition;
+        for (int j = 1; j < requiredLength; j++) {
+            if (secondPosition - j * frequency < 0 || scores[secondPosition - j * frequency] != score)
+                return -1;
+        }
+
+        return frequency;
+    }
+
+    return -1;
 }
 
 std::string runPart2(day_t& input) {
     std::stringstream output;
 
+    std::vector<int> scores;
+
+    const long long targetCycles = 1000000000;
+    long long currentCycle = 0;
+    int frequency = -1;
+    while (frequency == -1) {
+        currentCycle += 1;
+
+        tiltNorth(input);
+        tiltWest(input);
+        tiltSouth(input);
+        int score = tiltEast(input);
+        scores.push_back(score);
+
+        frequency = findFrequency(scores, score, 6);
+    }
+
+    long long offset = (targetCycles - currentCycle) % frequency;
+    output << scores[scores.size() - 1 - frequency + offset];
     return output.str();
 }
 
