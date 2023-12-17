@@ -43,6 +43,10 @@ public:
         }
     }
 
+    char peek() {
+        return *current;
+    }
+
     char read() {
         if (*current == '\0')
             return *current;
