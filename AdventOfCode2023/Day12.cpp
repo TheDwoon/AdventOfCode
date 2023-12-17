@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iterator>
 #include <vector>
+#include <deque>
 #include "parser.cpp"
 
 #define BROKEN_SPRING '#'
@@ -12,13 +13,8 @@
 
 #define TITLE "Day 12"
 
-struct spring_group {
-    char type {0};
-    int size {0};
-};
-
 struct engineer_note {
-    std::vector<spring_group> groups;
+    std::vector<char> springs;
     std::vector<int> groupSizes;
 };
 
@@ -31,20 +27,12 @@ day_t parseInput(std::string &input) {
     while (!p.eof()) {
         engineer_note note;
 
-        spring_group group { p.peek(), 0 } ;
         while (!p.isWhitespace()) {
             char c = p.read();
+            note.springs.push_back(c);
             assert(c == WORKING_SPRING || c == BROKEN_SPRING || c == UNKNOWN_SPRING);
-            if (group.type == c) {
-                group.size += 1;
-            } else {
-                note.groups.push_back(group);
-                group.type = c;
-                group.size = 1;
-            }
         }
 
-        note.groups.push_back(group);
         p.consume(' ');
 
         int groupSize;
@@ -60,9 +48,72 @@ day_t parseInput(std::string &input) {
     return result;
 }
 
-std::string runPart1(day_t& input) {
-    std::stringstream output;
+void printNote(const engineer_note& note) {
+    for (char c : note.springs)
+        std::cout << c;
 
+    std::cout << " ";
+    for (int i : note.groupSizes)
+        std::cout << i << " ";
+
+    std::cout << '\n';
+}
+
+bool isValid(const engineer_note &n) {
+    int brokenGroupIndex = 0;
+    int i = 0;
+    while (i < n.springs.size()) {
+        while (i < n.springs.size() && n.springs[i] != BROKEN_SPRING)
+            i += 1;
+
+        int groupSize = 0;
+        while (i < n.springs.size() && n.springs[i] == BROKEN_SPRING) {
+            groupSize += 1;
+            i += 1;
+        }
+
+        if (groupSize > 0) {
+            if (brokenGroupIndex >= n.groupSizes.size() || n.groupSizes[brokenGroupIndex] != groupSize)
+                return false;
+            else
+                brokenGroupIndex += 1;
+        }
+    }
+
+    return brokenGroupIndex == n.groupSizes.size();
+}
+
+std::string runPart1(day_t& notes) {
+    std::stringstream output;
+    std::deque<engineer_note> queue(notes.cbegin(), notes.cend());
+    int score = 0;
+
+    while (!queue.empty()) {
+        const engineer_note &note = queue.front();
+
+        int i = 0;
+        while (i < note.springs.size() && note.springs[i] != UNKNOWN_SPRING) {
+            i += 1;
+        }
+
+        if (i < note.springs.size()) {
+            engineer_note copy1 = note;
+            copy1.springs[i] = WORKING_SPRING;
+            engineer_note copy2 = note;
+            copy2.springs[i] = BROKEN_SPRING;
+
+            queue.push_back(copy1);
+            queue.push_back(copy2);
+        } else {
+            if (isValid(note)) {
+                score += 1;
+            }
+        }
+
+        queue.pop_front();
+    }
+
+    output << score;
     return output.str();
 }
 
