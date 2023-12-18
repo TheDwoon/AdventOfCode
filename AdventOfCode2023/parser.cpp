@@ -165,6 +165,14 @@ public:
         return false;
     }
 
+    [[nodiscard]] const char* getMarker() const {
+        return marker;
+    }
+
+    [[nodiscard]] const char* getCurrent() const {
+        return current;
+    }
+
     /**
      * Places a marked at the current position.
      */
