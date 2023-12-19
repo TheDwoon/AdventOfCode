@@ -16,18 +16,18 @@
 #define SPLITTER_HORIZONTAL '-'
 #define SPLITTER_VERTICAL '|'
 
-#define TYPE_MASK 0b11
+#define TYPE_MASK 0b111
 #define C_EMPTY_SPACE 0
 #define C_MIRROR_1 1
 #define C_MIRROR_2 2
 #define C_SPLITTER_HORIZONTAL 3
 #define C_SPLITTER_VERTICAL 4
 
-#define BEAM_MASK 0b111100
-#define BEAM_NORTH 0b100000
-#define BEAM_EAST 0b010000
-#define BEAM_SOUTH 0b001000
-#define BEAM_WEST 0b000100
+#define BEAM_MASK 0b1111000
+#define BEAM_NORTH 0b1000000
+#define BEAM_EAST 0b0100000
+#define BEAM_SOUTH 0b0010000
+#define BEAM_WEST 0b0001000
 
 struct map {
     std::vector<unsigned char> data;
@@ -156,11 +156,13 @@ void castRay(map &m, vec2i initialPosition, unsigned char initialDirection) {
         unsigned char direction = queue.front().direction;
         queue.pop_front();
 
-        unsigned char& c = m(pos);
-        if (hasBeam(c, direction))
-            continue;
-        else
-            c |= direction;
+        if (inMap(m, pos)) {
+            unsigned char &c = m(pos);
+            if (hasBeam(c, direction) && !isMirror(c))
+                continue;
+            else
+                c |= direction;
+        }
 
         pos = advance(pos, direction);
         bool followRay = true;
@@ -201,7 +203,7 @@ void castRay(map &m, vec2i initialPosition, unsigned char initialDirection) {
 
 std::string runPart1(day_t& input) {
     std::stringstream output;
-    castRay(input, {0,0}, BEAM_EAST);
+    castRay(input, {-1,0}, BEAM_EAST);
 
     int score = 0;
     for (int y = 0; y < input.height; y++) {
