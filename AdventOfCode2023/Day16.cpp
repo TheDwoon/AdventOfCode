@@ -100,10 +100,6 @@ bool isSplitter(unsigned char code, unsigned char direction) {
         || (code == C_SPLITTER_VERTICAL && (direction == BEAM_WEST || direction == BEAM_EAST));
 }
 
-bool canWalk(unsigned char code, unsigned char direction) {
-    return !isSplitter(code, direction) && !isMirror(code);
-}
-
 bool hasBeam(unsigned char code, unsigned char direction) {
     assert(direction != 0);
     return (code & direction) == direction;
@@ -113,7 +109,7 @@ bool hasBeam(unsigned char code) {
     return (code & BEAM_MASK) != 0;
 }
 
-bool inMap(const map& m, const vec2i &pos) {
+bool isInMap(const map& m, const vec2i &pos) {
     return pos.x >= 0 && pos.x < m.width && pos.y >= 0 && pos.y < m.height;
 }
 
@@ -156,7 +152,7 @@ void castRay(map &m, vec2i initialPosition, unsigned char initialDirection) {
         unsigned char direction = queue.front().direction;
         queue.pop_front();
 
-        if (inMap(m, pos)) {
+        if (isInMap(m, pos)) {
             unsigned char &c = m(pos);
             if (hasBeam(c, direction) && !isMirror(c))
                 continue;
@@ -166,7 +162,7 @@ void castRay(map &m, vec2i initialPosition, unsigned char initialDirection) {
 
         pos = advance(pos, direction);
         bool followRay = true;
-        while (followRay && inMap(m, pos)) {
+        while (followRay && isInMap(m, pos)) {
             unsigned char &n = m(pos);
             n |= direction;
 
@@ -201,22 +197,24 @@ void castRay(map &m, vec2i initialPosition, unsigned char initialDirection) {
     }
 }
 
+int countEnergizedTiles(map &m) {
+    int score = 0;
+    for (int y = 0; y < m.height; y++) {
+        for (int x = 0; x < m.width; x++) {
+            if (hasBeam(m(x, y))) {
+                score += 1;
+            } else {
+            }
+        }
+    }
+
+    return score;
+}
+
 std::string runPart1(day_t& input) {
     std::stringstream output;
     castRay(input, {-1,0}, BEAM_EAST);
-
-    int score = 0;
-    for (int y = 0; y < input.height; y++) {
-        for (int x = 0; x < input.width; x++) {
-            if (hasBeam(input(x, y))) {
-                score += 1;
-                std::cout << '#';
-            } else {
-                std::cout << '.';
-            }
-        }
-        std::cout << '\n';
-    }
+    int score = countEnergizedTiles(input);
 
     output << score;
     return output.str();
@@ -225,6 +223,41 @@ std::string runPart1(day_t& input) {
 std::string runPart2(day_t& input) {
     std::stringstream output;
 
+    int maxScore = 0;
+
+    // Upper Edge
+    for (int x = 0; x < input.width; x++) {
+        map m = input;
+        castRay(m, {x, -1}, BEAM_SOUTH);
+        int score = countEnergizedTiles(m);
+        maxScore = std::max(maxScore, score);
+    }
+
+    // Lower Edge
+    for (int x = 0; x < input.width; x++) {
+        map m = input;
+        castRay(m, {x, input.height}, BEAM_NORTH);
+        int score = countEnergizedTiles(m);
+        maxScore = std::max(maxScore, score);
+    }
+
+    // Left Edge
+    for (int y = 0; y < input.width; y++) {
+        map m = input;
+        castRay(m, {-1, y}, BEAM_EAST);
+        int score = countEnergizedTiles(m);
+        maxScore = std::max(maxScore, score);
+    }
+
+    // Right Edge
+    for (int y = 0; y < input.width; y++) {
+        map m = input;
+        castRay(m, {input.width, y}, BEAM_WEST);
+        int score = countEnergizedTiles(m);
+        maxScore = std::max(maxScore, score);
+    }
+
+    output << maxScore;
     return output.str();
 }
 
