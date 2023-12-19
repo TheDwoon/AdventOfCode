@@ -1,3 +1,5 @@
+#ifndef HEADER_VEC2
+#define HEADER_VEC2
 #include <tuple>
 
 template<typename T>
@@ -37,3 +39,4 @@ struct vec2 {
 typedef vec2<int> vec2i;
 typedef vec2<float> vec2f;
 typedef vec2<double> vec2d;
+#endif
