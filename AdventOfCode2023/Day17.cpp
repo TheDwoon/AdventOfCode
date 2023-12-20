@@ -151,7 +151,7 @@ int minimizeHeatLoss(const map &m, vec2i startPosition, vec2i heading, vec2i tar
             int tileHeat = m(straightPos);
             assert(tileHeat > 0);
             int heuristic = getDistanceCost(straightPos, target);
-            if (visit(m, costMap, straightPos, heading, n->lostHeat + tileHeat + heuristic)) {
+            if (visit(m, costMap, straightPos, heading, n->lostHeat + tileHeat)) {
                 queue.push(std::make_shared<node>(straightPos, n->heading, n->walkedStraight + 1, n->lostHeat + tileHeat, heuristic, n));
             }
         }
@@ -162,7 +162,7 @@ int minimizeHeatLoss(const map &m, vec2i startPosition, vec2i heading, vec2i tar
             int tileHeat = m(leftPos);
             assert(tileHeat > 0);
             int heuristic = getDistanceCost(leftPos, target);
-            if (visit(m, costMap, leftPos, heading, n->lostHeat + tileHeat + heuristic)) {
+            if (visit(m, costMap, leftPos, heading, n->lostHeat + tileHeat)) {
                 queue.push(std::make_shared<node>(leftPos, leftHeading, 0, n->lostHeat + tileHeat, heuristic, n));
             }
         }
@@ -173,7 +173,7 @@ int minimizeHeatLoss(const map &m, vec2i startPosition, vec2i heading, vec2i tar
             int tileHeat = m(rightPos);
             assert(tileHeat > 0);
             int heuristic = getDistanceCost(rightPos, target);
-            if (visit(m, costMap, rightPos, heading, n->lostHeat + tileHeat + heuristic)) {
+            if (visit(m, costMap, rightPos, heading, n->lostHeat + tileHeat)) {
                 queue.push(std::make_shared<node>(rightPos, rightHeading, 0, n->lostHeat + tileHeat, heuristic, n));
             }
         }
