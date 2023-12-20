@@ -59,13 +59,12 @@ struct node {
     int walkedStraight {0};
     int lostHeat {0};
     int heuristic {0};
+    std::shared_ptr<node> previous;
+};
 
-    friend bool operator<(const node &lhs, const node &rhs) {
-        return lhs.lostHeat + lhs.heuristic < rhs.lostHeat + rhs.heuristic;
-    }
-
-    friend bool operator>(const node &lhs, const node &rhs) {
-        return lhs.lostHeat + lhs.heuristic > rhs.lostHeat + rhs.heuristic;
+struct customCompare {
+    bool operator()(std::shared_ptr<node> &lhs, std::shared_ptr<node> &rhs) const {
+        return lhs->lostHeat > rhs->lostHeat;
     }
 };
 
@@ -74,68 +73,118 @@ bool isInMap(const map &m, const vec2i &pos) {
 }
 
 int getDistanceCost(const vec2i& position, const vec2i &target) {
-//    return 100 * (std::abs(position.x - target.x) + std::abs(position.y - target.y));
-    return 0;
+    return 100 * (std::abs(position.x - target.x) + std::abs(position.y - target.y));
 }
 
-bool visit(const map &m, int* costMap, const vec2i &pos, int cost) {
-    int pastCost = costMap[pos.y * m.width + pos.x];
+bool visit(const map &m, int* costMap, const vec2i &pos, const vec2i &heading, int cost) {
+    int h = 0;
+    if (heading == EAST)
+        h = 1;
+    else if (heading == SOUTH)
+        h = 2;
+    else if (heading == WEST)
+        h = 3;
+
+    int pastCost = costMap[4 * (pos.y * m.width + pos.x) + h];
     if (pastCost == -1 || cost <= pastCost) {
-        costMap[pos.y * m.width + pos.x] = cost;
+        costMap[4 * (pos.y * m.width + pos.x) + h] = cost;
         return true;
     } else {
         return false;
     }
 }
 
+void printPath(map m, std::shared_ptr<node> n) {
+    int lostHeat = n->lostHeat;
+    while (n) {
+        std::cout << n->position << " ";
+        m.data[n->position.y * m.width + n->position.x] |= 1024;
+        n = n->previous;
+    }
+    std::cout << "[" << lostHeat << "]" << "\n";
+
+    for (int y = 0; y < m.height; y++) {
+        for (int x = 0; x < m.width; x++) {
+            int i = m.data[y * m.width + x];
+            if ((i & 1024) == 1024)
+                std::cout << (char) (i - 1024 + '0');
+            else
+                std::cout << '.';
+        }
+
+        std::cout << "\n";
+    }
+}
+
 int minimizeHeatLoss(const map &m, vec2i startPosition, vec2i heading, vec2i target) {
-    std::priority_queue<node, std::vector<node>, std::greater<>> queue;
-    queue.emplace(startPosition, heading, 0, 0, 0);
+    std::priority_queue<std::shared_ptr<node>, std::vector<std::shared_ptr<node>>, customCompare> queue;
+    std::shared_ptr<node> n = std::make_shared<node>(startPosition, heading, 0, 0, 0);
+    queue.push(n);
 
-    int* costMap = new int[m.width * m.height];
-    std::fill(costMap, costMap + m.width * m.height, -1);
+    assert(EAST == TURN_RIGHT * NORTH);
+    assert(SOUTH == TURN_RIGHT * EAST);
+    assert(WEST == TURN_RIGHT * SOUTH);
+    assert(NORTH == TURN_RIGHT * WEST);
 
-    node n;
-    while (!queue.empty() && (n.position.x != target.x || n.position.y != target.y)) {
+    assert(WEST == TURN_LEFT * NORTH);
+    assert(NORTH == TURN_LEFT * EAST);
+    assert(EAST == TURN_LEFT * SOUTH);
+    assert(SOUTH == TURN_LEFT * WEST);
+
+    int* costMap = new int[4 * m.width * m.height];
+    std::fill(costMap, costMap + 4 * m.width * m.height, -1);
+
+    while (!queue.empty() && (n->position.x != target.x || n->position.y != target.y)) {
         n = queue.top();
         queue.pop();
 
-//        std::cout << "(" << n.position.x << ", " << n.position.y << ") " << n.lostHeat << " " << n.heuristic << "\n";
+        std::cout << n->lostHeat << "\n";
+//        printPath(m, n);
+//        std::cout << "******************" << std::endl;
 
-        vec2i straightPos = n.position + n.heading;
-        if (isInMap(m, straightPos) && n.walkedStraight < 3) {
-            int tileHeat = static_cast<int>(m(straightPos));
+        assert(n->heading.x >= -1 && n->heading.x <= 1);
+        assert(n->heading.y >= -1 && n->heading.y <= 1);
+        assert(n->heading.x != 0 || n->heading.y != 0);
+
+        vec2i straightPos = n->position + n->heading;
+        if (isInMap(m, straightPos) && n->walkedStraight < 2) {
+            int tileHeat = m(straightPos);
+            assert(tileHeat > 0);
             int heuristic = getDistanceCost(straightPos, target);
-            if (visit(m, costMap, straightPos, n.lostHeat + tileHeat + heuristic)) {
-                queue.emplace(straightPos, n.heading, n.walkedStraight + 1, n.lostHeat + tileHeat, heuristic);
+            if (visit(m, costMap, straightPos, heading, n->lostHeat + tileHeat + heuristic)) {
+                queue.push(std::make_shared<node>(straightPos, n->heading, n->walkedStraight + 1, n->lostHeat + tileHeat, heuristic, n));
             }
         }
 
-        vec2i leftHeading = TURN_LEFT * n.heading;
-        vec2i leftPos = n.position + leftHeading;
+        vec2i leftHeading = TURN_LEFT * n->heading;
+        vec2i leftPos = n->position + leftHeading;
         if (isInMap(m, leftPos)) {
-            int tileHeat = static_cast<int>(m(leftPos));
+            int tileHeat = m(leftPos);
+            assert(tileHeat > 0);
             int heuristic = getDistanceCost(leftPos, target);
-            if (visit(m, costMap, leftPos, n.lostHeat + tileHeat + heuristic)) {
-                queue.emplace(leftPos, leftHeading, 0, n.lostHeat + tileHeat, heuristic);
+            if (visit(m, costMap, leftPos, heading, n->lostHeat + tileHeat + heuristic)) {
+                queue.push(std::make_shared<node>(leftPos, leftHeading, 0, n->lostHeat + tileHeat, heuristic, n));
             }
         }
 
-        vec2i rightHeading = TURN_RIGHT * n.heading;
-        vec2i rightPos = n.position + rightHeading;
+        vec2i rightHeading = TURN_RIGHT * n->heading;
+        vec2i rightPos = n->position + rightHeading;
         if (isInMap(m, rightPos)) {
-            int tileHeat = static_cast<int>(m(rightPos));
+            int tileHeat = m(rightPos);
+            assert(tileHeat > 0);
             int heuristic = getDistanceCost(rightPos, target);
-            if (visit(m, costMap, rightPos, n.lostHeat + tileHeat + heuristic)) {
-                queue.emplace(rightPos, rightHeading, 0, n.lostHeat + tileHeat, heuristic);
+            if (visit(m, costMap, rightPos, heading, n->lostHeat + tileHeat + heuristic)) {
+                queue.push(std::make_shared<node>(rightPos, rightHeading, 0, n->lostHeat + tileHeat, heuristic, n));
             }
         }
     }
 
+    printPath(m, n);
+
     delete[] costMap;
-    assert(n.position.x == m.width - 1);
-    assert(n.position.y == m.height - 1);
-    return n.lostHeat;
+    assert(n->position.x == m.width - 1);
+    assert(n->position.y == m.height - 1);
+    return n->lostHeat;
 }
 
 std::string runPart1(day_t& input) {

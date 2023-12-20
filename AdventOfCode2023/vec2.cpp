@@ -1,6 +1,7 @@
 #ifndef HEADER_VEC2
 #define HEADER_VEC2
 #include <tuple>
+#include <ostream>
 
 template<typename T>
 struct vec2 {
@@ -33,6 +34,11 @@ struct vec2 {
 
     friend bool operator!=(const vec2<T> &lhs, const vec2<T> &rhs) {
         return lhs.y != rhs.y || lhs.x != rhs.x;
+    }
+
+    friend std::ostream& operator<<(std::ostream& stream, const vec2<T> &v) {
+        stream << "(" << v.x << ", " << v.y << ")";
+        return stream;
     }
 };
 
