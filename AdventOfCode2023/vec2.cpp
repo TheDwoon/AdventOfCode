@@ -8,6 +8,10 @@ struct vec2 {
     T x;
     T y;
 
+    vec2() : x(0), y(0) {
+
+    }
+
     vec2(T x, T y) : x(x), y(y) {
 
     }
