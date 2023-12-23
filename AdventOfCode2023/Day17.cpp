@@ -71,8 +71,8 @@ bool isInMap(const map &m, const vec2i &pos) {
     return pos.x >= 0 && pos.x < m.width && pos.y >= 0 && pos.y < m.height;
 }
 
-bool canVisit(const map &m, std::vector<int> &costMap, const vec2i &pos, int walked, int cost) {
-    auto& pastCost = costMap[3 * (pos.y * m.width + pos.x) + (walked - 1)];
+bool canVisit(const map &m, std::vector<int> &costMap, const vec2i &pos, int minWalk, int maxWalked, int walked, int cost) {
+    auto& pastCost = costMap[(maxWalked - minWalk + 1) * (pos.y * m.width + pos.x) + (walked - minWalk)];
     if (pastCost == -1 || cost < pastCost) {
         pastCost = cost;
         return true;
@@ -109,12 +109,12 @@ void checkDirection(std::priority_queue<std::shared_ptr<node>, std::vector<std::
     if (n->heading == heading)
         alreadyWalked = n->walkedStraight;
 
-    for (int i = minWalk; i <= maxWalk - alreadyWalked; i++) {
+    for (int i = 1; i <= maxWalk - alreadyWalked; i++) {
         vec2i pos = n->position + i * heading;
         if (isInMap(m, pos)) {
             lostHeat += m(pos);
 
-            if (canVisit(m, costMap, pos, alreadyWalked + i, lostHeat)) {
+            if (i >= minWalk && canVisit(m, costMap, pos, minWalk, maxWalk, alreadyWalked + i, lostHeat)) {
                 q.push(std::make_shared<node>(pos, heading, i, lostHeat, n));
             }
         }
@@ -138,7 +138,7 @@ int minimizeHeatLoss(const map &m, int minWalked, int maxWalked) {
     southCosts.resize(costSize, -1);
     westCosts.resize(costSize, -1);
 
-    auto chooseMap = [&] (vec2<int> heading) -> std::vector<int>&
+    auto chooseMap = [&] (const vec2<int> &heading) -> std::vector<int>&
     {
         if (heading == NORTH)
         {
@@ -177,8 +177,6 @@ int minimizeHeatLoss(const map &m, int minWalked, int maxWalked) {
         checkDirection(queue, n, m, chooseMap(rightHeading), rightHeading, minWalked, maxWalked);
     }
 
-     printPath(m, n);
-
     assert(n->position.x == m.width - 1);
     assert(n->position.y == m.height - 1);
     return n->lostHeat;
@@ -194,7 +192,9 @@ std::string runPart1(day_t& input) {
 
 std::string runPart2(day_t& input) {
     std::stringstream output;
+    int minLostHeat = minimizeHeatLoss(input, 4, 10);
 
+    output << minLostHeat;
     return output.str();
 }
 
