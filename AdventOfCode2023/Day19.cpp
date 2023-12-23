@@ -33,9 +33,21 @@ struct req {
     std::vector<material> materials;
 };
 
+struct range {
+    int lower {1};
+    int upper {4000};
+};
+
+struct range_material {
+    range x;
+    range m;
+    range a;
+    range s;
+};
+
 typedef req day_t;
 
-workflow* getWorkflow(std::vector<workflow> &wfs, const std::string &name) {
+const workflow* getWorkflow(const std::vector<workflow> &wfs, const std::string &name) {
     for (auto& wf : wfs) {
         if (wf.name == name)
             return &wf;
@@ -54,6 +66,16 @@ int getMaterialValue(char variable, const material &m) {
     }
 }
 
+range& getMaterialRange(char variable, range_material &m) {
+    switch (variable) {
+        case 'x': return m.x;
+        case 'm': return m.m;
+        case 'a': return m.a;
+        case 's': return m.s;
+        default: throw std::exception();
+    }
+}
+
 std::string applyWorkflow(const std::vector<workflow_rule> &rules, const material &m) {
     for (int i = 0; i < rules.size() - 1; i++) {
         auto &r = rules[i];
@@ -67,17 +89,18 @@ std::string applyWorkflow(const std::vector<workflow_rule> &rules, const materia
     return rules[rules.size() - 1].action;
 }
 
-void applyWorkflow(std::vector<workflow> &wfs, const material &m) {
-    workflow* wf = getWorkflow(wfs, "in");
+void applyWorkflow(const std::vector<workflow> &wfs, const material &m, std::vector<material> &accepted) {
+    const workflow* wf = getWorkflow(wfs, "in");
     while (!wf->rules.empty()) {
         std::string next = applyWorkflow(wf->rules, m);
-        std::cout << "[" << wf->name << "] => [" << next << "]" << std::endl;
+//        std::cout << "[" << wf->name << "] => [" << next << "]" << std::endl;
         wf = getWorkflow(wfs, next);
     }
 
-    std::cout << "*************" << std::endl;
+//    std::cout << "*************" << std::endl;
 
-    wf->materials.push_back(m);
+    if (wf->name == "A")
+        accepted.push_back(m);
 }
 
 void parseWorkflowRules(Parser &p, workflow &wf) {
@@ -148,13 +171,13 @@ day_t parseInput(std::string &input) {
 
 std::string runPart1(day_t& input) {
     std::stringstream output;
+    std::vector<material> accepted;
     int score = 0;
     for (auto &m : input.materials) {
-        applyWorkflow(input.workflows, m);
+        applyWorkflow(input.workflows, m, accepted);
     }
 
-    workflow* wf = getWorkflow(input.workflows, "A");
-    for (const material &m : wf->materials) {
+    for (const material &m : accepted) {
         score += m.x + m.m + m.a + m.s;
     }
 
@@ -162,9 +185,64 @@ std::string runPart1(day_t& input) {
     return output.str();
 }
 
+void applyWorkflow(std::vector<workflow> &wfs, const std::string &name, range_material m, std::vector<range_material> &accpeted) {
+    const workflow* wf = getWorkflow(wfs, name);
+    if (!wf->rules.empty()) {
+        for (const auto & r : wf->rules) {
+            if (r.operation == '<') {
+                // crate copy for call
+                range_material copy = m;
+                range& xmas = getMaterialRange(r.variable, copy);
+                xmas.upper = std::min(xmas.upper, r.threshold - 1);
+
+                // update range for following rules
+                range& xmas2 = getMaterialRange(r.variable, m);
+                xmas2.lower = std::max(xmas.lower, r.threshold);
+
+                if (xmas.lower <= xmas.upper) {
+                    applyWorkflow(wfs, r.action, copy, accpeted);
+                }
+            } else if (r.operation == '>') {
+                // crate copy for call
+                range_material copy = m;
+                range& xmas = getMaterialRange(r.variable, copy);
+                xmas.lower = std::max(xmas.lower, r.threshold + 1);
+
+                // update range for following rules
+                range& xmas2 = getMaterialRange(r.variable, m);
+                xmas2.upper = std::min(xmas.upper, r.threshold);
+
+                if (xmas.lower <= xmas.upper) {
+                    applyWorkflow(wfs, r.action, copy, accpeted);
+                }
+            } else {
+                applyWorkflow(wfs, r.action, m, accpeted);
+            }
+        }
+    } else if (wf->name == "A")
+        accpeted.push_back(m);
+}
+
+unsigned long long getRangeSize(const range& r) {
+    if (r.lower <= r.upper) {
+        return r.upper - r.lower + 1;
+    } else {
+        return 0;
+    }
+}
+
 std::string runPart2(day_t& input) {
     std::stringstream output;
+    std::vector<range_material> accepted;
+    range_material fullRange;
+    applyWorkflow(input.workflows, "in", fullRange, accepted);
 
+    unsigned long long score = 0;
+    for (const range_material& m : accepted) {
+        score += getRangeSize(m.x) * getRangeSize(m.m) * getRangeSize(m.a) * getRangeSize(m.s);
+    }
+
+    output << score;
     return output.str();
 }
 
