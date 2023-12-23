@@ -121,44 +121,34 @@ void checkDirection(std::priority_queue<std::shared_ptr<node>, std::vector<std::
     }
 }
 
+std::vector<int>& chooseCostMap(std::vector<int> *costs, const vec2i &heading) {
+    if (heading == NORTH) {
+        return costs[0];
+    } else if (heading == EAST) {
+        return costs[1];
+    } else if (heading == SOUTH) {
+        return costs[2];
+    } else if (heading == WEST) {
+        return costs[3];
+    } else {
+        assert(false);
+        return costs[0];
+    }
+}
+
 int minimizeHeatLoss(const map &m, int minWalked, int maxWalked) {
     std::priority_queue<std::shared_ptr<node>, std::vector<std::shared_ptr<node>>, customCompare> queue;
     std::shared_ptr<node> n = std::make_shared<node>(vec2i(0, 0), SOUTH, 0, 0);
     const vec2i target(m.width - 1, m.height - 1);
     queue.push(n);
 
-    std::vector<int> northCosts;
-    std::vector<int> eastCosts;
-    std::vector<int> southCosts;
-    std::vector<int> westCosts;
+    std::vector<int> costs[4];
 
     int costSize = (maxWalked - minWalked + 1) * m.width * m.height;
-    northCosts.resize(costSize, -1);
-    eastCosts.resize(costSize, -1);
-    southCosts.resize(costSize, -1);
-    westCosts.resize(costSize, -1);
-
-    auto chooseMap = [&] (const vec2<int> &heading) -> std::vector<int>&
-    {
-        if (heading == NORTH)
-        {
-            return northCosts;
-        }
-        if (heading == EAST)
-        {
-            return eastCosts;
-        }
-        if (heading == SOUTH)
-        {
-            return southCosts;
-        }
-        if (heading == WEST)
-        {
-            return westCosts;
-        }
-
-        assert(false);
-    };
+    costs[0].resize(costSize, -1);
+    costs[1].resize(costSize, -1);
+    costs[2].resize(costSize, -1);
+    costs[3].resize(costSize, -1);
 
     while (!queue.empty() && (n->position.x != target.x || n->position.y != target.y)) {
         n = queue.top();
@@ -168,13 +158,13 @@ int minimizeHeatLoss(const map &m, int minWalked, int maxWalked) {
         assert(n->heading.y >= -1 && n->heading.y <= 1);
         assert(n->heading.x != 0 || n->heading.y != 0);
 
-        checkDirection(queue, n, m, chooseMap(n->heading), n->heading, minWalked, maxWalked);
+        checkDirection(queue, n, m, chooseCostMap(costs, n->heading), n->heading, minWalked, maxWalked);
 
         vec2i leftHeading = TURN_LEFT * n->heading;
-        checkDirection(queue, n, m, chooseMap(leftHeading), leftHeading, minWalked, maxWalked);
+        checkDirection(queue, n, m, chooseCostMap(costs, leftHeading), leftHeading, minWalked, maxWalked);
 
         vec2i rightHeading = TURN_RIGHT * n->heading;
-        checkDirection(queue, n, m, chooseMap(rightHeading), rightHeading, minWalked, maxWalked);
+        checkDirection(queue, n, m, chooseCostMap(costs, rightHeading), rightHeading, minWalked, maxWalked);
     }
 
     assert(n->position.x == m.width - 1);
