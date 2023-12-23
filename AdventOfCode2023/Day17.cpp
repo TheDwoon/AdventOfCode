@@ -58,12 +58,11 @@ struct node {
     vec2i heading {0,0};
     int walkedStraight {0};
     int lostHeat {0};
-    std::shared_ptr<node> previous;
 };
 
 struct customCompare {
-    bool operator()(std::shared_ptr<node> &lhs, std::shared_ptr<node> &rhs) const {
-        return lhs->lostHeat > rhs->lostHeat;
+    bool operator()(const node &lhs, const node &rhs) const {
+        return lhs.lostHeat > rhs.lostHeat;
     }
 };
 
@@ -81,41 +80,19 @@ bool canVisit(const map &m, std::vector<int> &costMap, const vec2i &pos, int min
     }
 }
 
-void printPath(map m, std::shared_ptr<node> n) {
-    int lostHeat = n->lostHeat;
-    while (n) {
-        std::cout << n->position << " ";
-        m.data[n->position.y * m.width + n->position.x] |= 1024;
-        n = n->previous;
-    }
-    std::cout << "[" << lostHeat << "]" << "\n";
-
-    for (int y = 0; y < m.height; y++) {
-        for (int x = 0; x < m.width; x++) {
-            int i = m.data[y * m.width + x];
-            if ((i & 1024) == 1024)
-                std::cout << (char) (i - 1024 + '0');
-            else
-                std::cout << '.';
-        }
-
-        std::cout << "\n";
-    }
-}
-
-void checkDirection(std::priority_queue<std::shared_ptr<node>, std::vector<std::shared_ptr<node>>, customCompare> &q, const std::shared_ptr<node> &n, const map &m, std::vector<int>& costMap, const vec2i &heading, int minWalk, int maxWalk) {
-    int lostHeat = n->lostHeat;
+void checkDirection(std::priority_queue<node, std::vector<node>, customCompare> &q, const node &n, const map &m, std::vector<int>& costMap, const vec2i &heading, int minWalk, int maxWalk) {
+    int lostHeat = n.lostHeat;
     int alreadyWalked = 0;
-    if (n->heading == heading)
-        alreadyWalked = n->walkedStraight;
+    if (n.heading == heading)
+        alreadyWalked = n.walkedStraight;
 
     for (int i = 1; i <= maxWalk - alreadyWalked; i++) {
-        vec2i pos = n->position + i * heading;
+        vec2i pos = n.position + i * heading;
         if (isInMap(m, pos)) {
             lostHeat += m(pos);
 
             if (i >= minWalk && canVisit(m, costMap, pos, minWalk, maxWalk, alreadyWalked + i, lostHeat)) {
-                q.push(std::make_shared<node>(pos, heading, i, lostHeat, n));
+                q.emplace(pos, heading, i, lostHeat);
             }
         }
     }
@@ -137,8 +114,8 @@ std::vector<int>& chooseCostMap(std::vector<int> *costs, const vec2i &heading) {
 }
 
 int minimizeHeatLoss(const map &m, int minWalked, int maxWalked) {
-    std::priority_queue<std::shared_ptr<node>, std::vector<std::shared_ptr<node>>, customCompare> queue;
-    std::shared_ptr<node> n = std::make_shared<node>(vec2i(0, 0), SOUTH, 0, 0);
+    std::priority_queue<node, std::vector<node>, customCompare> queue;
+    node n { vec2i(0, 0), SOUTH, 0, 0 };
     const vec2i target(m.width - 1, m.height - 1);
     queue.push(n);
 
@@ -150,7 +127,7 @@ int minimizeHeatLoss(const map &m, int minWalked, int maxWalked) {
     costs[2].resize(costSize, -1);
     costs[3].resize(costSize, -1);
 
-    while (!queue.empty() && (n->position.x != target.x || n->position.y != target.y)) {
+    while (!queue.empty() && (n.position.x != target.x || n.position.y != target.y)) {
         n = queue.top();
         queue.pop();
 
@@ -158,18 +135,18 @@ int minimizeHeatLoss(const map &m, int minWalked, int maxWalked) {
         assert(n->heading.y >= -1 && n->heading.y <= 1);
         assert(n->heading.x != 0 || n->heading.y != 0);
 
-        checkDirection(queue, n, m, chooseCostMap(costs, n->heading), n->heading, minWalked, maxWalked);
+        checkDirection(queue, n, m, chooseCostMap(costs, n.heading), n.heading, minWalked, maxWalked);
 
-        vec2i leftHeading = TURN_LEFT * n->heading;
+        vec2i leftHeading = TURN_LEFT * n.heading;
         checkDirection(queue, n, m, chooseCostMap(costs, leftHeading), leftHeading, minWalked, maxWalked);
 
-        vec2i rightHeading = TURN_RIGHT * n->heading;
+        vec2i rightHeading = TURN_RIGHT * n.heading;
         checkDirection(queue, n, m, chooseCostMap(costs, rightHeading), rightHeading, minWalked, maxWalked);
     }
 
     assert(n->position.x == m.width - 1);
     assert(n->position.y == m.height - 1);
-    return n->lostHeat;
+    return n.lostHeat;
 }
 
 std::string runPart1(day_t& input) {
