@@ -1,4 +1,5 @@
 #include <cassert>
+#include <string>
 
 class Parser {
 private:
@@ -107,6 +108,20 @@ public:
 
         if (c != current) {
             current = c;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    bool readString(std::string &ref, unsigned int num) {
+        unsigned int i = 0;
+        while (i < num && current[i] != '\0')
+            i++;
+
+        if (i == num) {
+            ref = std::string(current, num);
+            current += num;
             return true;
         } else {
             return false;
