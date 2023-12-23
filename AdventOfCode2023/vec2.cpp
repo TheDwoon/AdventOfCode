@@ -23,6 +23,13 @@ struct vec2 {
         return *this;
     }
 
+    vec2& operator+=(const T& other) {
+        x += other;
+        y += other;
+
+        return *this;
+    }
+
     vec2& operator-=(const vec2<T>& other) {
         x -= other.x;
         y -= other.y;
@@ -30,7 +37,19 @@ struct vec2 {
         return *this;
     }
 
+    vec2& operator*=(const T& other) {
+        x *= other;
+        y *= other;
+
+        return *this;
+    }
+
     friend vec2<T> operator+(vec2<T> lhs, const vec2<T> &rhs) {
+        lhs += rhs;
+        return lhs;
+    }
+
+    friend vec2<T> operator+(vec2<T> lhs, const T& rhs) {
         lhs += rhs;
         return lhs;
     }

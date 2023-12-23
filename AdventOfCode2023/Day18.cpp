@@ -4,11 +4,13 @@
 #include <sstream>
 #include <iterator>
 #include <vector>
+#include <queue>
 #include "parser.cpp"
 #include "util.cpp"
 
 #define TITLE "Day 18"
 
+#define FLOODED 2
 #define EXCAVATED 1
 #define DIRT 0
 
@@ -54,67 +56,89 @@ day_t parseInput(std::string &input) {
     return result;
 }
 
-bool isExcavated(const aoc::map2d<int> &map, int x, int y) {
-    return (map(x,y) & 1) == 1;
+bool isExcavated(const aoc::map2d<int> &map, const vec2i &position) {
+    return (map(position) & EXCAVATED) == EXCAVATED;
 }
 
 void excavate(aoc::map2d<int> &map, const vec2i &position) {
     map(position) |= EXCAVATED;
 }
 
-int countWalls(aoc::map2di &map, vec2i position, const vec2i& direction) {
-    bool inWall = (map(position) & EXCAVATED) == EXCAVATED;
-    int wallCount = inWall ? 1 : 0;
-    position += direction;
-    while (map.contains(position)) {
-        bool isWallTile = (map(position) & EXCAVATED) == EXCAVATED;
-        if (inWall ^ isWallTile) {
-            inWall = !inWall;
-            wallCount += inWall ? 1 : 0;
-        }
+void flood(aoc::map2di &map, const vec2i& position) {
+    map(position) |= FLOODED;
+}
 
-        position += direction;
+bool isFlooded(const aoc::map2di &map, const vec2i &position) {
+    return (map(position) & FLOODED) == FLOODED;
+}
+
+bool checkAndFlood(aoc::map2di &map, const vec2i &position) {
+    if (map.contains(position) && !isFlooded(map, position) && !isExcavated(map, position)) {
+        flood(map, position);
+        return true;
     }
 
-    return wallCount;
+    return false;
 }
 
 void excavateInside(aoc::map2di &map) {
+    vec2i floodPosition(map.minX(), map.minY());
+    assert(!isExcavated(map, floodPosition));
+    flood(map, floodPosition);
+    std::queue<vec2i> q;
+    q.push(floodPosition);
+    while (!q.empty()) {
+        floodPosition = q.front();
+        q.pop();
+
+        vec2i north = floodPosition + aoc::direction::NORTH;
+        if (checkAndFlood(map, north)) q.push(north);
+
+        vec2i south = floodPosition + aoc::direction::SOUTH;
+        if (checkAndFlood(map, south)) q.push(south);
+
+        vec2i west = floodPosition + aoc::direction::WEST;
+        if (checkAndFlood(map, west)) q.push(west);
+
+        vec2i east = floodPosition + aoc::direction::EAST;
+        if (checkAndFlood(map, east)) q.push(east);
+    }
+
     vec2i pos;
-    for (pos.y = 0; pos.y < map.height; pos.y++) {
-        for (pos.x = 0; pos.x < map.width; pos.x++) {
-            int leftWalls = countWalls(map, pos, aoc::direction::LEFT);
-            int rightWalls = countWalls(map, pos, aoc::direction::RIGHT);
-            if (leftWalls > 0 && leftWalls == rightWalls) {
+    for (pos.y = map.minY(); pos.y < map.maxY(); pos.y++) {
+        for (pos.x = map.minX(); pos.x < map.maxX(); pos.x++) {
+            if (!isFlooded(map, pos))
                 excavate(map, pos);
-            }
         }
     }
 }
 
 std::string runPart1(day_t& input) {
     std::stringstream output;
-    const int width = 10;
-    const int height = 15;
     int score = 0;
 
-    aoc::map2d<int> map(width, height);
+    aoc::map2d<int> map(2, 2);
     vec2i excavator;
 
     for (const instruction &instr : input) {
         for (int i = 0; i < instr.dimension; i++) {
             excavator += instr.direction;
+            if (!map.contains(excavator))
+                map.include(excavator, 10);
+
             excavate(map, excavator);
         }
     }
 
+    map.extend({-1, -1});
     excavateInside(map);
 
-    std::cout << "**************\n";
-    for (int y = 0; y < map.height; y++) {
-        for (int x = 0; x < map.width; x++) {
-            std::cout << (map(x, y) != 0 ? '#' : '.');
-            score += map(x, y) != 0 ? 1 : 0;
+    vec2i position;
+    for (position.y = map.minY(); position.y < map.maxY(); position.y++) {
+        for (position.x = map.minX(); position.x < map.maxX(); position.x++) {
+            bool excavated = isExcavated(map, position);
+            std::cout << (excavated ? '#' : '.');
+            score += excavated ? 1 : 0;
         }
 
         std::cout << std::endl;
