@@ -103,27 +103,36 @@ void printPath(map m, std::shared_ptr<node> n) {
     }
 }
 
-int minimizeHeatLoss(const map &m, vec2i startPosition, vec2i heading, vec2i target) {
+void checkDirection(std::priority_queue<std::shared_ptr<node>, std::vector<std::shared_ptr<node>>, customCompare> &q, const std::shared_ptr<node> &n, const map &m, std::vector<int>& costMap, const vec2i &heading, int minWalk, int maxWalk) {
+    int lostHeat = n->lostHeat;
+    int alreadyWalked = 0;
+    if (n->heading == heading)
+        alreadyWalked = n->walkedStraight;
+
+    for (int i = minWalk; i <= maxWalk - alreadyWalked; i++) {
+        vec2i pos = n->position + i * heading;
+        if (isInMap(m, pos)) {
+            lostHeat += m(pos);
+
+            if (canVisit(m, costMap, pos, alreadyWalked + i, lostHeat)) {
+                q.push(std::make_shared<node>(pos, heading, i, lostHeat, n));
+            }
+        }
+    }
+}
+
+int minimizeHeatLoss(const map &m, int minWalked, int maxWalked) {
     std::priority_queue<std::shared_ptr<node>, std::vector<std::shared_ptr<node>>, customCompare> queue;
-    std::shared_ptr<node> n = std::make_shared<node>(startPosition, heading, 0, 0);
+    std::shared_ptr<node> n = std::make_shared<node>(vec2i(0, 0), SOUTH, 0, 0);
+    const vec2i target(m.width - 1, m.height - 1);
     queue.push(n);
-
-    assert(EAST == TURN_RIGHT * NORTH);
-    assert(SOUTH == TURN_RIGHT * EAST);
-    assert(WEST == TURN_RIGHT * SOUTH);
-    assert(NORTH == TURN_RIGHT * WEST);
-
-    assert(WEST == TURN_LEFT * NORTH);
-    assert(NORTH == TURN_LEFT * EAST);
-    assert(EAST == TURN_LEFT * SOUTH);
-    assert(SOUTH == TURN_LEFT * WEST);
 
     std::vector<int> northCosts;
     std::vector<int> eastCosts;
     std::vector<int> southCosts;
     std::vector<int> westCosts;
 
-    int costSize = 3 * m.width * m.height;
+    int costSize = (maxWalked - minWalked + 1) * m.width * m.height;
     northCosts.resize(costSize, -1);
     eastCosts.resize(costSize, -1);
     southCosts.resize(costSize, -1);
@@ -151,60 +160,21 @@ int minimizeHeatLoss(const map &m, vec2i startPosition, vec2i heading, vec2i tar
         assert(false);
     };
 
-    int lastPrinted = 0;
     while (!queue.empty() && (n->position.x != target.x || n->position.y != target.y)) {
         n = queue.top();
         queue.pop();
-
-        int heat = n->lostHeat;
-        // std::cout << heat << "  " << lastPrinted << "\n";
-        if (heat != lastPrinted)
-        {
-            std::cout << heat << std::endl;
-            lastPrinted = heat;
-        }
-
-//        printPath(m, n);
-//        std::cout << "******************" << std::endl;
 
         assert(n->heading.x >= -1 && n->heading.x <= 1);
         assert(n->heading.y >= -1 && n->heading.y <= 1);
         assert(n->heading.x != 0 || n->heading.y != 0);
 
-        {
-            vec2i straightPos = n->position + n->heading;
-            if (isInMap(m, straightPos) && n->walkedStraight < 3) {
-                int tileHeat = m(straightPos);
-                assert(tileHeat > 0);
-                if (canVisit(m, chooseMap(n->heading), straightPos, n->walkedStraight + 1, heat + tileHeat)) {
-                    queue.push(std::make_shared<node>(straightPos, n->heading, n->walkedStraight + 1, heat + tileHeat, n));
-                }
-            }
-        }
+        checkDirection(queue, n, m, chooseMap(n->heading), n->heading, minWalked, maxWalked);
 
-        {
-            vec2i leftHeading = TURN_LEFT * n->heading;
-            vec2i leftPos = n->position + leftHeading;
-            if (isInMap(m, leftPos)) {
-                int tileHeat = m(leftPos);
-                assert(tileHeat > 0);
-                if (canVisit(m, chooseMap(leftHeading), leftPos, 1, heat + tileHeat)) {
-                    queue.push(std::make_shared<node>(leftPos, leftHeading, 1, heat + tileHeat, n));
-                }
-            }
-        }
+        vec2i leftHeading = TURN_LEFT * n->heading;
+        checkDirection(queue, n, m, chooseMap(leftHeading), leftHeading, minWalked, maxWalked);
 
-        {
-            vec2i rightHeading = TURN_RIGHT * n->heading;
-            vec2i rightPos = n->position + rightHeading;
-            if (isInMap(m, rightPos)) {
-                int tileHeat = m(rightPos);
-                assert(tileHeat > 0);
-                if (canVisit(m, chooseMap(rightHeading), rightPos, 1, heat + tileHeat)) {
-                    queue.push(std::make_shared<node>(rightPos, rightHeading, 1, heat + tileHeat, n));
-                }
-            }
-        }
+        vec2i rightHeading = TURN_RIGHT * n->heading;
+        checkDirection(queue, n, m, chooseMap(rightHeading), rightHeading, minWalked, maxWalked);
     }
 
      printPath(m, n);
@@ -216,7 +186,7 @@ int minimizeHeatLoss(const map &m, vec2i startPosition, vec2i heading, vec2i tar
 
 std::string runPart1(day_t& input) {
     std::stringstream output;
-    int minLostHeat = minimizeHeatLoss(input, {0, 0}, SOUTH, {input.width - 1, input.height - 1});
+    int minLostHeat = minimizeHeatLoss(input, 1, 3);
 
     output << minLostHeat;
     return output.str();

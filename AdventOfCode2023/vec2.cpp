@@ -28,6 +28,18 @@ struct vec2 {
         return lhs;
     }
 
+    friend vec2<T> operator*(vec2<T> lhs, const T& rhs) {
+        lhs.x *= rhs;
+        lhs.y *= rhs;
+        return lhs;
+    }
+
+    friend vec2<T> operator*(const T& rhs, vec2<T> lhs) {
+        lhs.x *= rhs;
+        lhs.y *= rhs;
+        return lhs;
+    }
+
     friend bool operator<(const vec2<T> &lhs, const vec2<T> &rhs) {
         return std::tie(lhs.y, lhs.x) < std::tie(rhs.y, rhs.x);
     }
