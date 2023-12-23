@@ -124,16 +124,16 @@ std::string runPart1(day_t& modules) {
             int signalIndex = getInputIndex(m, is.source);
             assert(signalIndex >= 0);
             m.input_pulse[signalIndex] = is.pulse;
-            bool sendHighPulse = true;
+            bool allInputsHigh = true;
             for (pulse p : m.input_pulse) {
                 if (p == LOW) {
-                    sendHighPulse = false;
+                    allInputsHigh = false;
                     break;
                 }
             }
 
             for (const std::string &o : m.outputs) {
-                signal_queue.emplace(m.name, o, sendHighPulse ? HIGH : LOW);
+                signal_queue.emplace(m.name, o, allInputsHigh ? LOW : HIGH);
             }
         } else {
             assert(false);
