@@ -131,9 +131,9 @@ int minimizeHeatLoss(const map &m, int minWalked, int maxWalked) {
         n = queue.top();
         queue.pop();
 
-        assert(n->heading.x >= -1 && n->heading.x <= 1);
-        assert(n->heading.y >= -1 && n->heading.y <= 1);
-        assert(n->heading.x != 0 || n->heading.y != 0);
+        assert(n.heading.x >= -1 && n.heading.x <= 1);
+        assert(n.heading.y >= -1 && n.heading.y <= 1);
+        assert(n.heading.x != 0 || n.heading.y != 0);
 
         checkDirection(queue, n, m, chooseCostMap(costs, n.heading), n.heading, minWalked, maxWalked);
 
@@ -144,8 +144,8 @@ int minimizeHeatLoss(const map &m, int minWalked, int maxWalked) {
         checkDirection(queue, n, m, chooseCostMap(costs, rightHeading), rightHeading, minWalked, maxWalked);
     }
 
-    assert(n->position.x == m.width - 1);
-    assert(n->position.y == m.height - 1);
+    assert(n.position.x == m.width - 1);
+    assert(n.position.y == m.height - 1);
     return n.lostHeat;
 }
 
