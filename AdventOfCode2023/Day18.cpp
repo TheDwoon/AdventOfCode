@@ -59,14 +59,35 @@ bool isExcavated(const aoc::map2d<int> &map, int x, int y) {
 }
 
 void excavate(aoc::map2d<int> &map, const vec2i &position) {
-    map(position) = EXCAVATED;
+    map(position) |= EXCAVATED;
 }
 
-void markInside(aoc::map2di &map, vec2i position, const vec2i& direction) {
-    bool inWall = false;
+int countWalls(aoc::map2di &map, vec2i position, const vec2i& direction) {
+    bool inWall = (map(position) & EXCAVATED) == EXCAVATED;
+    int wallCount = inWall ? 1 : 0;
+    position += direction;
     while (map.contains(position)) {
-        if (map(position) == EXCAVATED) {
+        bool isWallTile = (map(position) & EXCAVATED) == EXCAVATED;
+        if (inWall ^ isWallTile) {
+            inWall = !inWall;
+            wallCount += inWall ? 1 : 0;
+        }
 
+        position += direction;
+    }
+
+    return wallCount;
+}
+
+void excavateInside(aoc::map2di &map) {
+    vec2i pos;
+    for (pos.y = 0; pos.y < map.height; pos.y++) {
+        for (pos.x = 0; pos.x < map.width; pos.x++) {
+            int leftWalls = countWalls(map, pos, aoc::direction::LEFT);
+            int rightWalls = countWalls(map, pos, aoc::direction::RIGHT);
+            if (leftWalls > 0 && leftWalls == rightWalls) {
+                excavate(map, pos);
+            }
         }
     }
 }
@@ -75,6 +96,7 @@ std::string runPart1(day_t& input) {
     std::stringstream output;
     const int width = 10;
     const int height = 15;
+    int score = 0;
 
     aoc::map2d<int> map(width, height);
     vec2i excavator;
@@ -86,15 +108,19 @@ std::string runPart1(day_t& input) {
         }
     }
 
+    excavateInside(map);
+
     std::cout << "**************\n";
     for (int y = 0; y < map.height; y++) {
         for (int x = 0; x < map.width; x++) {
-            std::cout << (map(x, y) == 1 ? '#' : '.');
+            std::cout << (map(x, y) != 0 ? '#' : '.');
+            score += map(x, y) != 0 ? 1 : 0;
         }
 
         std::cout << std::endl;
     }
 
+    output << score;
     return output.str();
 }
 
