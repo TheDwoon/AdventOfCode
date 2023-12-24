@@ -56,11 +56,18 @@ day_t parseInput(std::string &input) {
         p.readString(m.name, offset);
         p.consume(" -> ");
 
-        while (!p.isNewLine() && (p.findNext(", ", offset) || p.findNext("\r\n", offset) || p.findNext("\n", offset))) {
+        while (!p.isNewLine()) {
             std::string output;
-            p.readString(output, offset);
-            m.outputs.push_back(output);
-            p.consume(", ");
+            unsigned int closestToken { 999 };
+            if (p.findNext(", ", offset)) closestToken = std::min(closestToken, offset);
+            if (p.findNext("\r\n", offset)) closestToken = std::min(closestToken, offset);
+            if (p.findNext("\n", offset)) closestToken = std::min(closestToken, offset);
+
+            if (closestToken != 999) {
+                p.readString(output, closestToken);
+                m.outputs.push_back(output);
+                p.consume(", ");
+            }
         }
 
         modules[m.name] = m;
@@ -93,53 +100,66 @@ std::string runPart1(day_t& modules) {
     std::stringstream output;
     std::queue<inflight_signal> signal_queue;
 
-    inflight_signal is { "button", "broadcaster", LOW };
-    signal_queue.push(is);
+    int lowSignals = 0;
+    int highSignals = 0;
 
-    while (!signal_queue.empty()) {
-        is = signal_queue.front();
-        signal_queue.pop();
 
-        std::cout << is.source << " -[" << is.pulse << "]-> " << is.target << std::endl;
+    for (int i = 0; i < 1000; i++) {
+        inflight_signal is { "button", "broadcaster", LOW };
+        signal_queue.push(is);
 
-        module &m = modules[is.target];
-        if (m.type == BROADCAST) {
-            for (const std::string &o : m.outputs) {
-                signal_queue.emplace(m.name, o, is.pulse);
+        while (!signal_queue.empty()) {
+            is = signal_queue.front();
+            signal_queue.pop();
+
+            if (is.pulse == HIGH) {
+                highSignals += 1;
+            } else {
+                lowSignals += 1;
             }
-        } else if (m.type == FLIP_FLOP) {
-            if (is.pulse == LOW) {
-                m.is_on = !m.is_on;
-                if (m.is_on) {
-                    for (const std::string &o : m.outputs) {
-                        signal_queue.emplace(m.name, o, HIGH);
-                    }
-                } else {
-                    for (const std::string &o : m.outputs) {
-                        signal_queue.emplace(m.name, o, LOW);
+
+            std::cout << is.source << " -[" << is.pulse << "]-> " << is.target << std::endl;
+
+            module &m = modules[is.target];
+            if (m.type == BROADCAST) {
+                for (const std::string &o: m.outputs) {
+                    signal_queue.emplace(m.name, o, is.pulse);
+                }
+            } else if (m.type == FLIP_FLOP) {
+                if (is.pulse == LOW) {
+                    m.is_on = !m.is_on;
+                    if (m.is_on) {
+                        for (const std::string &o: m.outputs) {
+                            signal_queue.emplace(m.name, o, HIGH);
+                        }
+                    } else {
+                        for (const std::string &o: m.outputs) {
+                            signal_queue.emplace(m.name, o, LOW);
+                        }
                     }
                 }
-            }
-        } else if (m.type == CONJUNCTION) {
-            int signalIndex = getInputIndex(m, is.source);
-            assert(signalIndex >= 0);
-            m.input_pulse[signalIndex] = is.pulse;
-            bool allInputsHigh = true;
-            for (pulse p : m.input_pulse) {
-                if (p == LOW) {
-                    allInputsHigh = false;
-                    break;
+            } else if (m.type == CONJUNCTION) {
+                int signalIndex = getInputIndex(m, is.source);
+                assert(signalIndex >= 0);
+                m.input_pulse[signalIndex] = is.pulse;
+                bool allInputsHigh = true;
+                for (pulse p: m.input_pulse) {
+                    if (p == LOW) {
+                        allInputsHigh = false;
+                        break;
+                    }
                 }
-            }
 
-            for (const std::string &o : m.outputs) {
-                signal_queue.emplace(m.name, o, allInputsHigh ? LOW : HIGH);
+                for (const std::string &o: m.outputs) {
+                    signal_queue.emplace(m.name, o, allInputsHigh ? LOW : HIGH);
+                }
+            } else {
+                std::cout << "    > Untyped module: " << is.target << " " << is.pulse << "\n";
             }
-        } else {
-            assert(false);
         }
     }
 
+    output << (lowSignals * highSignals);
     return output.str();
 }
 
