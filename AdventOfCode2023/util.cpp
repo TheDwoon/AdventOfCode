@@ -7,12 +7,11 @@
 namespace aoc {
     template<typename T>
     T gcd(T a, T b) {
-        T tmpA, tmpB;
+        T tmp;
         while (b != 0) {
-            tmpA = a;
-            tmpB = b;
-            a = tmpB;
-            b = tmpA % tmpB;
+            tmp = b;
+            b = a % b;
+            a = tmp;
         }
 
         return a;
