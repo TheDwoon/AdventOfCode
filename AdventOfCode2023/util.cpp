@@ -6,6 +6,32 @@
 
 namespace aoc {
     template<typename T>
+    T gcd(T a, T b) {
+        T tmpA, tmpB;
+        while (b != 0) {
+            tmpA = a;
+            tmpB = b;
+            a = tmpB;
+            b = tmpA % tmpB;
+        }
+
+        return a;
+    }
+
+    template<typename T>
+    T findLCM(const T* data, size_t length) {
+        T lcm = 1;
+        if (length > 0) {
+            lcm = data[0];
+            for (unsigned int i = 1; i < length; i++) {
+                    lcm = data[i] * lcm / gcd(data[i], lcm);
+            }
+        }
+
+        return lcm;
+    }
+
+    template<typename T>
     int signum(T x) {
         return (x < 0) ? -1 : ((x > 0) ? 1 : 0);
     }
