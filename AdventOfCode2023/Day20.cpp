@@ -7,6 +7,7 @@
 #include <queue>
 #include <map>
 #include "parser.cpp"
+#include "util.cpp"
 
 #define TITLE "Day 20"
 
@@ -74,6 +75,9 @@ day_t parseInput(std::string &input) {
         p.readNewLine();
     }
 
+    module rx_module { "rx" };
+    modules[rx_module.name] = rx_module;
+
     for (auto& it : modules) {
         for (const std::string &output : it.second.outputs) {
             modules[output].input_names.push_back(it.first);
@@ -118,7 +122,7 @@ std::string runPart1(day_t& modules) {
                 lowSignals += 1;
             }
 
-            std::cout << is.source << " -[" << is.pulse << "]-> " << is.target << std::endl;
+//            std::cout << is.source << " -[" << is.pulse << "]-> " << is.target << std::endl;
 
             module &m = modules[is.target];
             if (m.type == BROADCAST) {
@@ -154,7 +158,7 @@ std::string runPart1(day_t& modules) {
                     signal_queue.emplace(m.name, o, allInputsHigh ? LOW : HIGH);
                 }
             } else {
-                std::cout << "    > Untyped module: " << is.target << " " << is.pulse << "\n";
+//                std::cout << "    > Untyped module: " << is.target << " " << is.pulse << "\n";
             }
         }
     }
@@ -163,9 +167,51 @@ std::string runPart1(day_t& modules) {
     return output.str();
 }
 
-std::string runPart2(day_t& input) {
-    std::stringstream output;
+int getCycleFrequency(day_t &modules, const module& m) {
+    int frequency {0};
+    switch (m.type) {
+        case BROADCAST:
+            frequency = 1;
+            break;
+        case FLIP_FLOP: {
+            assert(!m.input_names.empty());
+            // TODO: This doesn't work for more than 1 input
+            const module inputModule = modules[m.input_names[0]];
+            frequency = 2 * getCycleFrequency(modules, inputModule);
+            break;
+        }
+        case CONJUNCTION: {
+            int* frequencies = new int[m.input_names.size()];
+            for (int i = 0; i < m.input_names.size(); i++) {
+                const module inputModule = modules[m.input_names[i]];
+                frequencies[i] = getCycleFrequency(modules, inputModule);
+            }
 
+            frequency = aoc::findLCM(frequencies, m.input_names.size());
+            delete[] frequencies;
+            break;
+        }
+        case NONE: {
+            assert(m.input_names.size() == 1);
+            const module inputModule = modules[m.input_names[0]];
+            frequency = getCycleFrequency(modules, inputModule);
+            break;
+        }
+        default: break;
+    }
+
+    std::cout << m.name << ": f" << frequency << "\n";
+    return frequency;
+}
+
+std::string runPart2(day_t& modules) {
+    std::stringstream output;
+    std::queue<inflight_signal> signal_queue;
+
+    module rx = modules["rx"];
+    int minButtonPresses = getCycleFrequency(modules, rx);
+
+    output << minButtonPresses;
     return output.str();
 }
 
