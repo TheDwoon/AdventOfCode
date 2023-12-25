@@ -5,6 +5,7 @@
 #include <iterator>
 #include <vector>
 #include "parser.cpp"
+#include "util.cpp"
 
 #define TITLE "Day XX"
 
