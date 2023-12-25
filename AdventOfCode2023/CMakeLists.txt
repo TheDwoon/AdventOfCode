@@ -26,6 +26,7 @@ add_executable(Day17 Day17.cpp parser.cpp vec2.cpp mat2.cpp)
 add_executable(Day18 Day18.cpp parser.cpp vec2.cpp mat2.cpp util.cpp)
 add_executable(Day19 Day19.cpp parser.cpp vec2.cpp mat2.cpp util.cpp)
 add_executable(Day20 Day20.cpp parser.cpp vec2.cpp mat2.cpp util.cpp)
+add_executable(Day21 Day21.cpp parser.cpp vec2.cpp mat2.cpp util.cpp)
 
 
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -march=native")

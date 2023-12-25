@@ -40,6 +40,7 @@ namespace aoc {
         static const vec2i DOWN { 0, 1 };
         static const vec2i LEFT { -1, 0};
         static const vec2i RIGHT { 1, 0 };
+        static const vec2i DIRECTIONS[4] { UP, DOWN, LEFT, RIGHT };
 
         const static mat2i TURN_RIGHT {0, -1, 1, 0};
         const static mat2i TURN_LEFT {0, 1, -1, 0};
@@ -64,8 +65,8 @@ namespace aoc {
             data.resize(width * height);
         }
 
-        map2d(int width, int height) : width(width), height(height) {
-            data.resize(width * height);
+        map2d(int width, int height, T init = 0) : width(width), height(height) {
+            data.resize(width * height, init);
         }
 
         [[nodiscard]] bool contains(const vec2i& v) const {
