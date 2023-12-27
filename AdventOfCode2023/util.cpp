@@ -134,6 +134,19 @@ namespace aoc {
             extend(delta, init);
         }
 
+        void copy(const map2d<T> &other, const vec2i& position, T init = 0) {
+            vec2i bottomRight = position + vec2i(other.width - 1, other.height - 1);
+
+            include(position, 0, init);
+            include(bottomRight, 0, init);
+
+            for (int y = 0; y < other.height; y++) {
+                for (int x = 0; x < other.width; x++) {
+                    data[(position.y + y - topLeft.y) * width + position.x + x - topLeft.x] = other.data[y * other.width + x];
+                }
+            }
+        }
+
         void origin(const vec2i& origin) {
             topLeft -= origin;
         }
