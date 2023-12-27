@@ -55,13 +55,13 @@ namespace aoc {
     template<typename T>
     struct map2d {
         std::vector<T> data;
-        vec2i origin;
+        vec2i topLeft;
         int width{0};
         int height{0};
 
         map2d() = default;
 
-        map2d(vec2i origin, int width, int height) : origin(origin), width(width), height(height) {
+        map2d(vec2i topLeft, int width, int height) : topLeft(topLeft), width(width), height(height) {
             data.resize(width * height);
         }
 
@@ -74,17 +74,17 @@ namespace aoc {
         }
 
         [[nodiscard]] bool contains(int x, int y) const {
-            x -= origin.x;
-            y -= origin.y;
+            x -= topLeft.x;
+            y -= topLeft.y;
             return x >= 0 && x < width && y >= 0 && y < height;
         }
 
-        void resize(const vec2i& newOrigin, int newWidth, int newHeight) {
+        void resize(const vec2i& newOrigin, int newWidth, int newHeight, T init = 0) {
             std::vector<T> newData;
-            newData.resize(newWidth * newHeight);
+            newData.resize(newWidth * newHeight, init);
 
-            int dx = origin.x - newOrigin.x;
-            int dy = origin.y - newOrigin.y;
+            int dx = topLeft.x - newOrigin.x;
+            int dy = topLeft.y - newOrigin.y;
 
             for (int y = std::max(0, -dy); y < std::min(height, newHeight - dy); y++) {
                 for (int x = std::max(0, -dx); x < std::min(width, newWidth - dx); x++) {
@@ -92,16 +92,16 @@ namespace aoc {
                 }
             }
 
-            origin = newOrigin;
+            topLeft = newOrigin;
             width = newWidth;
             height = newHeight;
             data = newData;
         }
 
-        void extend(vec2i direction) {
+        void extend(vec2i direction, T init = 0) {
             int newWidth = width;
             int newHeight = height;
-            vec2i newOrigin = origin;
+            vec2i newOrigin = topLeft;
 
             newWidth += std::abs(direction.x);
             newHeight += std::abs(direction.y);
@@ -112,13 +112,13 @@ namespace aoc {
                 newOrigin.y += direction.y;
             }
 
-            resize(newOrigin, newWidth, newHeight);
+            resize(newOrigin, newWidth, newHeight, init);
         }
 
-        void include(const vec2i &position, int buffer = 0) {
+        void include(const vec2i &position, int buffer = 0, T init = 0) {
             if (contains(position)) return;
 
-            vec2i delta = position - origin;
+            vec2i delta = position - topLeft;
             delta.x += signum(delta.x) * buffer;
             delta.y += signum(delta.y) * buffer;
             if (delta.x >= width)
@@ -131,44 +131,73 @@ namespace aoc {
             else if (delta.y > 0)
                 delta.y = 0;
 
-            extend(delta);
+            extend(delta, init);
+        }
+
+        void origin(const vec2i& origin) {
+            topLeft -= origin;
+        }
+
+        void center() {
+            vec2i newCenter {(topLeft.x + width) / 2, (topLeft.y + height) / 2};
+            origin(newCenter);
         }
 
         [[nodiscard]] int minX() const {
-            return origin.x;
+            return topLeft.x;
         }
 
         [[nodiscard]] int maxX() const {
-            return origin.x + width;
+            return topLeft.x + width;
         }
 
         [[nodiscard]] int minY() const {
-            return origin.y;
+            return topLeft.y;
         }
 
         [[nodiscard]] int maxY() const {
-            return origin.y + height;
+            return topLeft.y + height;
         }
 
         T& operator()(const vec2i &v) {
             assert(contains(v.x, v.y));
-            return data[(v.y - origin.y) * width + v.x - origin.x];
+            return data[(v.y - topLeft.y) * width + v.x - topLeft.x];
         }
 
         const T& operator()(const vec2i &v) const {
-            return data[(v.y - origin.y) * width + v.x - origin.x];
+            return data[(v.y - topLeft.y) * width + v.x - topLeft.x];
         }
 
         T& operator()(int x, int y) {
-            return data[(y - origin.y) * width + x - origin.x];
+            return data[(y - topLeft.y) * width + x - topLeft.x];
         }
 
         const T& operator()(int x, int y) const {
-            return data[(y - origin.y) * width + x - origin.x];
+            return data[(y - topLeft.y) * width + x - topLeft.x];
         }
     };
 
     typedef map2d<int> map2di;
     typedef map2d<char> map2dc;
+
+    template<typename T>
+    struct map2d_view {
+        const map2d<T> *map;
+        vec2i offset;
+
+        map2d_view(const map2d<T> *map, const vec2i &offset) : map(map), offset(offset) {
+            assert(map != nullptr);
+        }
+
+        [[nodiscard]] bool contains(vec2i pos) const {
+            pos += offset;
+            return map->contains(pos);
+        }
+
+        const T& operator()(vec2i pos) const {
+            pos += offset;
+            return (*map)(pos);
+        }
+    };
 }
 #endif
