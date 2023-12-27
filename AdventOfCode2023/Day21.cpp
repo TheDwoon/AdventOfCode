@@ -92,17 +92,15 @@ aoc::map2di findMinimalSteps(const aoc::map2dc &map, const vec2i &startingPositi
 }
 
 bool canReach(const aoc::map2di &steps, const vec2i &position, int maxSteps) {
-    for (const vec2i &dir : aoc::direction::DIRECTIONS) {
-        vec2i p = position + dir;
-        if (steps.contains(p) && steps(p) % 2 == maxSteps % 2 && steps(p) <= maxSteps)
-            return true;
-    }
+    if (steps.contains(position) && steps(position) % 2 == maxSteps % 2 && steps(position) <= maxSteps)
+        return true;
 
     return false;
 }
 
 std::string runPart1(day_t& map) {
     std::stringstream output;
+    const int maxSteps = 64;
     int score = 0;
     vec2i startingPosition = getStartingPosition(map);
     aoc::map2di steps = findMinimalSteps(map, startingPosition);
@@ -110,7 +108,7 @@ std::string runPart1(day_t& map) {
     vec2i pos;
     for (pos.y = 0; pos.y < map.height; pos.y++) {
         for (pos.x = 0; pos.x < map.width; pos.x++) {
-            if (canVisit(map, pos) && canReach(steps, pos, 6))
+            if (canVisit(map, pos) && canReach(steps, pos, maxSteps))
                 score += 1;
         }
     }
