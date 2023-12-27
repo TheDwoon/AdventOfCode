@@ -119,7 +119,46 @@ std::string runPart1(day_t& map) {
 
 std::string runPart2(day_t& input) {
     std::stringstream output;
+//    const int maxSteps = 26501365;
+    const int maxSteps = 12;
+    int score = 0;
+    vec2i startingPosition = getStartingPosition(input);
+    input(startingPosition) = GARDEN_PLOT;
+    startingPosition += vec2i(input.width, input.height);
 
+    aoc::map2dc map(3 * input.width, 3 * input.height);
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            map.copy(input, vec2i(i * input.width, j * input.height));
+        }
+    }
+
+    vec2i pos;
+    for (pos.y = 0; pos.y < map.height; pos.y++) {
+        for (pos.x = 0; pos.x < map.width; pos.x++) {
+            std::cout << map(pos);
+        }
+
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
+    aoc::map2di steps = findMinimalSteps(map, startingPosition);
+
+    for (pos.y = 0; pos.y < map.height; pos.y++) {
+        for (pos.x = 0; pos.x < map.width; pos.x++) {
+            if (canVisit(map, pos) && canReach(steps, pos, maxSteps)) {
+                std::cout << 'O';
+                score += 1;
+            } else {
+                std::cout << map(pos);
+            }
+        }
+
+        std::cout << std::endl;
+    }
+
+    output << score;
     return output.str();
 }
 
