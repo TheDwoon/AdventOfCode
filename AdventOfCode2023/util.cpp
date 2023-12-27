@@ -212,5 +212,8 @@ namespace aoc {
             return (*map)(pos);
         }
     };
+
+    typedef map2d_view<int> map2di_view;
+    typedef map2d_view<char> map2dc_view;
 }
 #endif
