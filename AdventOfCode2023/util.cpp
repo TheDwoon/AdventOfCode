@@ -287,17 +287,5 @@ namespace aoc {
             target->edges_in.push_back(e);
         }
     };
-
-    namespace r_tree {
-        template<typename T>
-        struct node {
-
-        };
-
-        template<typename T>
-        struct r_tree {
-
-        };
-    }
 }
 #endif
