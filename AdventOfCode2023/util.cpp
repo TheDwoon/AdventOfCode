@@ -1,7 +1,9 @@
 #ifndef HEADER_UTIL
 #define HEADER_UTIL
 #include <vector>
+#include <cassert>
 #include "vec2.cpp"
+#include "vec3.cpp"
 #include "mat2.cpp"
 
 namespace aoc {
@@ -33,6 +35,36 @@ namespace aoc {
     template<typename T>
     int signum(T x) {
         return (x < 0) ? -1 : ((x > 0) ? 1 : 0);
+    }
+
+    template<typename T>
+    bool inRange(T start, T end, T x) {
+        return start <= x && x <= end;
+    }
+
+    template<typename T>
+    bool inRange(const vec3<T> &start, const vec3<T> &end, const vec3<T> &x) {
+        return inRange(start.x, end.x, x.x)
+               && inRange(start.y, end.y, x.y)
+               && inRange(start.z, end.z, x.z);
+    }
+
+    bool hasOverlap(int x1, int x2, int y1, int y2) {
+        assert(x1 <= x2);
+        assert(y1 <= y2);
+
+        return y1 <= x2 && x1 <= y2;
+    }
+
+    struct bounding_box {
+        vec3i start;
+        vec3i end;
+    };
+
+    bool hasOverlap(const bounding_box &a, const bounding_box &b) {
+        return hasOverlap(a.start.x, a.end.x, b.start.x, b.end.x)
+            && hasOverlap(a.start.y, a.end.y, b.start.y, b.end.y)
+            && hasOverlap(a.start.z, a.end.z, b.start.z, b.end.z);
     }
 
     namespace direction {
@@ -215,5 +247,57 @@ namespace aoc {
 
     typedef map2d_view<int> map2di_view;
     typedef map2d_view<char> map2dc_view;
+
+    template<typename TNode, typename TEdge>
+    struct edge;
+
+    template<typename TNode, typename TEdge>
+    class node {
+    public:
+        node() = default;
+        node(TNode value): value(value) {
+
+        }
+
+        TNode value;
+        std::vector<std::shared_ptr<edge<TNode, TEdge>>> edges_out;
+        std::vector<std::shared_ptr<edge<TNode, TEdge>>> edges_in;
+    };
+
+    template<typename TNode, typename TEdge>
+    struct edge {
+        std::shared_ptr<node<TNode, TEdge>> source;
+        std::shared_ptr<node<TNode, TEdge>> target;
+        TEdge value;
+    };
+
+    template<typename TNode = int, typename TEdge = int>
+    struct directed_graph {
+        std::vector<std::shared_ptr<node<TNode, TEdge>>> nodes;
+
+        std::shared_ptr<node<TNode, TEdge>> addNode(TNode value) {
+            std::shared_ptr<node<TNode, TEdge>> n = std::make_shared<node<TNode, TEdge>>(value);
+            nodes.push_back(n);
+            return n;
+        }
+
+        void addEdge(std::shared_ptr<node<TNode, TEdge>>& source, std::shared_ptr<node<TNode, TEdge>>& target, TEdge value) {
+            std::shared_ptr<edge<TNode, TEdge>> e = std::make_shared<edge<TNode, TEdge>>(source, target, value);
+            source->edges_out.push_back(e);
+            target->edges_in.push_back(e);
+        }
+    };
+
+    namespace r_tree {
+        template<typename T>
+        struct node {
+
+        };
+
+        template<typename T>
+        struct r_tree {
+
+        };
+    }
 }
 #endif
