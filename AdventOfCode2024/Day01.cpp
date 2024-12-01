@@ -50,22 +50,30 @@ std::string runPart1(const day_t& input) {
 
 std::string runPart2(const day_t& input) {
     std::stringstream output;
-
     int sum = 0;
-    int leftIdx = 0;
-    int rightIdx = 0;
 
-    int size = static_cast<int>(input.leftSide.size());
-    while (leftIdx < size || rightIdx < size) {
-        if (input.leftSide[leftIdx] < input.rightSide[rightIdx]) {
+    int j = 0;
+    const int size = static_cast<int>(input.leftSide.size());
+    for (int i = 0; i < size; i++) {
+        while (j < size && input.leftSide[i] > input.rightSide[j])
+            j++;
 
-        } else if (input.leftSide[leftIdx] > input.rightSide[rightIdx]) {
-
-        } else {
-
+        int countRight = 0;
+        while (j < size && input.leftSide[i] == input.rightSide[j]) {
+            j++;
+            countRight++;
         }
+
+        int countLeft = 1;
+        while (i + 1 < size && input.leftSide[i] == input.leftSide[i + 1]) {
+            i++;
+            countLeft++;
+        }
+
+        sum += countLeft * input.leftSide[i] * countRight;
     }
 
+    output << sum;
     return output.str();
 }
 
