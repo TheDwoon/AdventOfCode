@@ -10,11 +10,11 @@
 std::vector<std::string> tokenize(const std::string &input, const std::string &separator);
 typedef const char* day_t;
 
-day_t parseInput(std::string &input) {
+day_t parseInput(const std::string &input) {
     return input.c_str();
 }
 
-std::string runPart1(day_t& input) {
+std::string runPart1(const day_t& input) {
     std::stringstream output;
     int sum = 0;
 
@@ -36,20 +36,20 @@ std::string runPart1(day_t& input) {
     return output.str();
 }
 
-const char one[] = "one";
-const char two[] = "two";
-const char three[] = "three";
-const char four[] = "four";
-const char five[] = "five";
-const char six[] = "six";
-const char seven[] = "seven";
-const char eight[] = "eight";
-const char nine[] = "nine";
+constexpr char one[] = "one";
+constexpr char two[] = "two";
+constexpr char three[] = "three";
+constexpr char four[] = "four";
+constexpr char five[] = "five";
+constexpr char six[] = "six";
+constexpr char seven[] = "seven";
+constexpr char eight[] = "eight";
+constexpr char nine[] = "nine";
 
 const char* const ref_numbers[] = { one, two, three, four, five, six, seven, eight, nine };
 char const* numbers[] = { one, two, three, four, five, six, seven, eight, nine };
 
-std::string runPart2(day_t& input) {
+std::string runPart2(const day_t& input) {
     std::stringstream output;
     int sum = 0;
 
@@ -96,12 +96,12 @@ std::string runPart2(day_t& input) {
 // BOILER PLATE CODE BELOW
 
 std::string readInput() {
-    std::cin >> std::noskipws;
+    constexpr  size_t buffer_size = 32 * 1024;
+    char buffer[buffer_size] {};
+    std::cin.read(buffer, buffer_size);
 
-    std::istream_iterator<char> it(std::cin);
-    std::istream_iterator<char> end;
-    std::string fileContent(it, end);
-
+    auto input_length = std::cin.gcount();
+    std::string fileContent(buffer, input_length);
     return fileContent;
 }
 
@@ -122,43 +122,26 @@ std::string formatTime(std::chrono::duration<long long, std::nano> t) {
 
 int main()
 {
-	std::cout << "######################################" << std::endl;
-	std::cout << "############### " << TITLE << " ###############" << std::endl;
-	std::cout << "######################################" << std::endl;
+#ifdef NDEBUG
+    auto gt0 = std::chrono::high_resolution_clock::now();
+#endif
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(nullptr);
 
 	const std::string originalInput = readInput();
+	day_t parsedInput = parseInput(originalInput);
+	std::string output_part1 = runPart1(parsedInput);
 
-    std::string input = originalInput;
-	auto t0 = std::chrono::high_resolution_clock::now();
-	day_t parsedInput = parseInput(input);
-	auto t1 = std::chrono::high_resolution_clock::now();
-	std::string output = runPart1(parsedInput);
-	auto t2 = std::chrono::high_resolution_clock::now();
+	parsedInput = parseInput(originalInput);
+	std::string output_part2 = runPart2(parsedInput);
 
-	std::cout << std::endl;
-	std::cout << "**************************************" << std::endl;
-	std::cout << output << std::endl;
-	std::cout << "*************** Task 1 ***************" << std::endl;
-	std::cout << "Parsing: " << formatTime(t1 - t0) << std::endl;
-	std::cout << "Running: " << formatTime(t2 - t1) << std::endl;
-	std::cout << "Total: " << formatTime(t2 - t0) << std::endl;
-	std::cout << "**************************************" << std::endl;
+	std::cout << "Part 1: " << output_part1 << '\n';
+	std::cout << "Part 2: " << output_part2 << '\n';
 
-	input = originalInput;
-	t0 = std::chrono::high_resolution_clock::now();
-	parsedInput = parseInput(input);
-	t1 = std::chrono::high_resolution_clock::now();
-	output = runPart2(parsedInput);
-	t2 = std::chrono::high_resolution_clock::now();
-
-	std::cout << std::endl;
-	std::cout << "**************************************" << std::endl;
-	std::cout << output << std::endl;
-	std::cout << "*************** Task 2 ***************" << std::endl;
-	std::cout << "Parsing: " << formatTime(t1 - t0) << std::endl;
-	std::cout << "Running: " << formatTime(t2 - t1) << std::endl;
-	std::cout << "Total: " << formatTime(t2 - t0) << std::endl;
-	std::cout << "**************************************" << std::endl;
+#ifdef NDEBUG
+    auto gt2 = std::chrono::high_resolution_clock::now();
+    std::cout << "Global Time: " << formatTime(gt2 - gt0) << '\n';
+#endif
 }
 
 std::vector<std::string> tokenize(const std::string &input, const std::string &separator) {

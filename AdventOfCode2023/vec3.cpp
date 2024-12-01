@@ -17,6 +17,24 @@ struct vec3 {
 
     }
 
+    static vec3<T> min(const vec3<T>& a, const vec3<T>& b) {
+        vec3<T> v;
+        v.x = std::min(a.x, b.x);
+        v.y = std::min(a.y, b.y);
+        v.z = std::min(a.z, b.z);
+
+        return v;
+    }
+
+    static vec3<T> max(const vec3<T>& a, const vec3<T>& b) {
+        vec3<T> v;
+        v.x = std::max(a.x, b.x);
+        v.y = std::max(a.y, b.y);
+        v.z = std::max(a.z, b.z);
+
+        return v;
+    }
+
     vec3& operator+=(const vec3<T>& other) {
         x += other.x;
         y += other.y;
