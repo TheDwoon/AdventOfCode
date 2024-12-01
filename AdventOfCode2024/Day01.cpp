@@ -13,12 +13,19 @@ struct notes {
     std::vector<int> rightSide;
 };
 
+constexpr long INPUT_BUFFER_SIZE = 32 * 1024;
+
+struct input {
+    char buffer[INPUT_BUFFER_SIZE];
+    long length;
+};
+
 std::vector<std::string> tokenize(const std::string &input, const std::string &separator);
 typedef notes day_t;
 
-day_t parseInput(const std::string &input) {
+day_t parseInput(const input &input) {
     day_t note;
-    Parser p(input.c_str());
+    Parser p(input.buffer);
     while (!p.eof()) {
         int a { 0 }, b { 0 };
         p.readInt(a);
@@ -79,14 +86,10 @@ std::string runPart2(const day_t& input) {
 
 // BOILER PLATE CODE BELOW
 
-std::string readInput() {
-    constexpr  size_t buffer_size = 32 * 1024;
-    char buffer[buffer_size] {};
-    std::cin.read(buffer, buffer_size);
+void readInput(input &i) {
+    std::cin.read(i.buffer, INPUT_BUFFER_SIZE);
 
-    auto input_length = std::cin.gcount();
-    std::string fileContent(buffer, input_length);
-    return fileContent;
+    i.length = std::cin.gcount();
 }
 
 std::string formatTime(std::chrono::duration<long long, std::nano> t) {
@@ -112,10 +115,11 @@ int main()
     std::ios_base::sync_with_stdio(false);
     std::cin.tie(nullptr);
 
-	const std::string originalInput = readInput();
-	day_t parsedInput = parseInput(originalInput);
-	std::string output_part1 = runPart1(parsedInput);
-	std::string output_part2 = runPart2(parsedInput);
+    input in;
+	readInput(in);
+	const day_t parsedInput = parseInput(in);
+	const std::string output_part1 = runPart1(parsedInput);
+	const std::string output_part2 = runPart2(parsedInput);
 
 	std::cout << "Part 1: " << output_part1 << '\n';
 	std::cout << "Part 2: " << output_part2 << '\n';
