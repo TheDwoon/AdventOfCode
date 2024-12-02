@@ -123,10 +123,8 @@ std::string runPart2(const day_t& input) {
         const int startIdx = boundaries[i];
         const int endIdx = boundaries[i + 1];
 
-        if (isValidLine(startIdx, endIdx, levels, 1, false)
-            || isValidLine(startIdx, endIdx, levels, -1, false)
-            || isValidLine(startIdx + 1, endIdx, levels, 1 , true)
-            || isValidLine(startIdx + 1, endIdx, levels, -1 , true)) {
+        if (isValidLine(startIdx, endIdx, levels, signum(levels[startIdx], levels[endIdx - 1]), false)
+            || isValidLine(startIdx + 1, endIdx, levels, signum(levels[startIdx + 1], levels[endIdx - 1]) , true)) {
             sum += 1;
         }
     }
