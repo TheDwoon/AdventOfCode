@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iterator>
 #include <vector>
+#include <algorithm>
 #include "parser.cpp"
 
 #define TITLE "Day 01"
