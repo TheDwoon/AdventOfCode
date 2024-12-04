@@ -1,8 +1,3 @@
-#include <string>
-#include <iostream>
-#include <chrono>
-#include <sstream>
-#include <iterator>
 #include <vector>
 #include <algorithm>
 #include "parser.cpp"
@@ -14,19 +9,11 @@ struct notes {
     std::vector<int> rightSide;
 };
 
-constexpr long INPUT_BUFFER_SIZE = 32 * 1024;
-
-struct input {
-    char buffer[INPUT_BUFFER_SIZE];
-    long length;
-};
-
-std::vector<std::string> tokenize(const std::string &input, const std::string &separator);
 typedef notes day_t;
 
-day_t parseInput(const input &input) {
+day_t parseInput(const char* const buffer, const int length) {
     day_t note;
-    Parser p(input.buffer);
+    Parser p(buffer);
     while (!p.eof()) {
         int a { 0 }, b { 0 };
         p.readInt(a);
@@ -44,20 +31,16 @@ day_t parseInput(const input &input) {
     return note;
 }
 
-std::string runPart1(const day_t& input) {
-    std::stringstream output;
-
+void runPart1(const day_t& input) {
     int sum = 0;
     for (size_t i = 0; i < input.leftSide.size(); i++) {
         sum += std::abs(input.leftSide[i] - input.rightSide[i]);
     }
 
-    output << sum;
-    return output.str();
+    printf("%d\n", sum);
 }
 
-std::string runPart2(const day_t& input) {
-    std::stringstream output;
+void runPart2(const day_t& input) {
     int sum = 0;
 
     int j = 0;
@@ -81,67 +64,18 @@ std::string runPart2(const day_t& input) {
         sum += countLeft * input.leftSide[i] * countRight;
     }
 
-    output << sum;
-    return output.str();
+    printf("%d\n", sum);
 }
 
 // BOILER PLATE CODE BELOW
 
-void readInput(input &i) {
-    std::cin.read(i.buffer, INPUT_BUFFER_SIZE);
-
-    i.length = std::cin.gcount();
-}
-
-std::string formatTime(std::chrono::duration<long long, std::nano> t) {
-    std::stringstream output;
-    if (t.count() < 10000) {
-        output << t.count() << "ns";
-    }
-    else if (t.count() < 10000000) {
-        output << t.count() / 1000 << "us";
-    }
-    else {
-        output << t.count() / 1000000 << "ms";
-    }
-
-    return output.str();
-}
-
 int main()
 {
-#ifdef NDEBUG
-    auto gt0 = std::chrono::high_resolution_clock::now();
-#endif
-    std::ios_base::sync_with_stdio(false);
-    std::cin.tie(nullptr);
+    constexpr long INPUT_BUFFER_SIZE = 32 * 1024;
+    char buffer[INPUT_BUFFER_SIZE];
+    const int length = static_cast<int>(fread(buffer, 1, INPUT_BUFFER_SIZE, stdin));
 
-    input in;
-	readInput(in);
-	const day_t parsedInput = parseInput(in);
-	const std::string output_part1 = runPart1(parsedInput);
-	const std::string output_part2 = runPart2(parsedInput);
-
-	std::cout << "Part 1: " << output_part1 << '\n';
-	std::cout << "Part 2: " << output_part2 << '\n';
-
-#ifdef NDEBUG
-    auto gt2 = std::chrono::high_resolution_clock::now();
-    std::cout << "Global Time: " << formatTime(gt2 - gt0) << '\n';
-#endif
-}
-
-std::vector<std::string> tokenize(const std::string &input, const std::string &separator) {
-    std::vector<std::string> tokenized;
-
-    size_t pos = 0;
-    size_t tokenEnd;
-    do {
-        tokenEnd = input.find(separator, pos);
-        std::string token = input.substr(pos, (tokenEnd - pos));
-        tokenized.push_back(token);
-        pos = tokenEnd + separator.size();
-    } while(tokenEnd != std::string::npos);
-
-    return tokenized;
+	const day_t parsedInput = parseInput(buffer, length);
+	runPart1(parsedInput);
+	runPart2(parsedInput);
 }
