@@ -50,14 +50,16 @@ void runDay(const day_t& input) {
     unsigned int lineLength;
     p.findNext("\n", lineLength);
 
-    const vec2i directions[] { {-1, 0}, {-1, 1}, {0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}};
+    const vec2i directions[] { {-1, 1}, {0, 1}, {1, 1}, {1, 0}};
     map m { input.buffer, static_cast<int>(lineLength), static_cast<int>(input.length / (lineLength + 1)), static_cast<int>(lineLength + 1) };
 
     // Part 1
     for (vec2i pos; pos.y < m.height; pos.y++) {
         for (pos.x = 0; pos.x < m.width; pos.x++) {
             for (const vec2i &direction : directions) {
-                if (foundString("XMAS", 4, direction, pos, m))
+                if (m(pos.x, pos.y) == 'X' && foundString("XMAS", 4, direction, pos, m))
+                    part1++;
+                if (m(pos.x, pos.y) == 'S' && foundString("SAMX", 4, direction, pos, m))
                     part1++;
             }
 
