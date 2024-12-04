@@ -50,33 +50,22 @@ day_t parseInput(const input &input) {
     return instructions;
 }
 
-std::string runPart1(const day_t& input) {
-    std::stringstream output;
-    int sum = 0;
-
-    for (const auto&[_, a, b] : input) {
-        sum += a * b;
-    }
-
-    output << sum;
-    return output.str();
-}
-
-std::string runPart2(const day_t& input) {
-    std::stringstream output;
-    int sum = 0;
+void runDay(const day_t& input) {
+    int part1 = 0;
+    int part2 = 0;
 
     bool enabled = true;
     for (const auto&[type, a, b] : input) {
+        part1 += a * b;
         if (type == MUL && enabled) {
-            sum += a * b;
+            part2 += a * b;
         } else {
             enabled = type == DO;
         }
     }
 
-    output << sum;
-    return output.str();
+    std::cout << "Part 1: " << part1 << '\n';
+    std::cout << "Part 2: " << part2 << '\n';
 }
 
 // BOILER PLATE CODE BELOW
@@ -113,12 +102,7 @@ int main()
     input in;
 	readInput(in);
 	const day_t parsedInput = parseInput(in);
-	const std::string output_part1 = runPart1(parsedInput);
-	const std::string output_part2 = runPart2(parsedInput);
-
-	std::cout << "Part 1: " << output_part1 << '\n';
-	std::cout << "Part 2: " << output_part2 << '\n';
-
+	runDay(parsedInput);
 #ifdef NDEBUG
     auto gt2 = std::chrono::high_resolution_clock::now();
     std::cout << "Global Time: " << formatTime(gt2 - gt0) << '\n';
