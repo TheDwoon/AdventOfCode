@@ -48,16 +48,14 @@ void runDay(const char* const buffer, const int length) {
                 if (m(pos.x, pos.y) == 'S' && foundString("SAMX", 4, direction, pos, m))
                     part1++;
             }
-
-            if (pos.x >= 1 && pos.x < m.width - 1 && pos.y >= 1 && pos.y < m.height - 1
-                && m(pos.x, pos.y) == 'A'
-                && (m(pos.x - 1, pos.y + 1) == 'S' || m(pos.x - 1, pos.y + 1) == 'M')
-                && (m(pos.x - 1, pos.y - 1) == 'S' || m(pos.x -1, pos.y - 1) == 'M')
-                && (m(pos.x + 1, pos.y + 1) == 'S' || m(pos.x + 1, pos.y + 1) == 'M')
-                && (m(pos.x + 1, pos.y - 1) == 'S' || m(pos.x + 1, pos.y - 1) == 'M')
-                && m(pos.x - 1, pos.y + 1) != m(pos.x + 1, pos.y - 1)
-                && m(pos.x + 1, pos.y + 1) != m(pos.x - 1, pos.y - 1)
-                ) {
+            if (pos.x < m.width - 2 && pos.y < m.height - 2
+                && (m(pos.x, pos.y) == 'S' || m(pos.x, pos.y) == 'M')
+                && m(pos.x + 1, pos.y + 1) == 'A'
+                && (m(pos.x + 2, pos.y) == 'S' || m(pos.x + 2, pos.y) == 'M')
+                && (m(pos.x, pos.y + 2) == 'S' || m(pos.x, pos.y + 2) == 'M')
+                && (m(pos.x + 2, pos.y + 2) == 'S' || m(pos.x + 2, pos.y + 2) == 'M')
+                && m(pos.x, pos.y) != m(pos.x + 2, pos.y + 2)
+                && m(pos.x, pos.y + 2) != m(pos.x + 2, pos.y)) {
                 part2++;
             }
         }
