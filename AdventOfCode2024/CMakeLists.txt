@@ -9,6 +9,7 @@ add_executable(Day01 Day01.cpp)
 add_executable(Day02 Day02.cpp)
 add_executable(Day03 Day03.cpp)
 add_executable(Day04 Day04.cpp)
+add_executable(Day05 Day05.cpp)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEBUG} -DNRELEASE -Ofast")
