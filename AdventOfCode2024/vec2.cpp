@@ -71,6 +71,10 @@ struct vec2 {
         return lhs;
     }
 
+    friend T operator*(const vec2<T> &lhs, const vec2<T> &rhs) {
+        return lhs.x * rhs.x + lhs.y * rhs.y;
+    }
+
     friend bool operator<(const vec2<T> &lhs, const vec2<T> &rhs) {
         return std::tie(lhs.y, lhs.x) < std::tie(rhs.y, rhs.x);
     }
