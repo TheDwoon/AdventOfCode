@@ -26,6 +26,7 @@ struct map {
     char& at(const int x, const int y) const {
         assert (x >= 0 && x < width);
         assert (y >= 0 && y < height);
+        assert (buffer[y * lineLength + x] != '#');
         return buffer[y * lineLength + x];
     }
 
@@ -33,6 +34,7 @@ struct map {
     char& at(const vec2i& pos) const {
         assert (pos.x >= 0 && pos.x < width);
         assert (pos.y >= 0 && pos.y < height);
+        assert (buffer[pos.y * lineLength + pos.x] != '#');
         return buffer[pos.y * lineLength + pos.x];
     }
 
@@ -100,27 +102,27 @@ vec2i findStartingPosition(const map& m) {
 
 bool runsInCircle(vec2i pos, vec2i facing, const map &m) {
     while (pos.x >= 0 && pos.x < m.width && pos.y >= 0 && pos.y < m.height) {
-        char mask;
-        if (facing == aoc::direction::UP) {
-            mask = MASK_UP;
-        } else if (facing == aoc::direction::DOWN) {
-            mask = MASK_DOWN;
-        } else if (facing == aoc::direction::LEFT) {
-            mask = MASK_LEFT;
-        } else {
-            mask = MASK_RIGHT;
-        }
-
-        const char c = m(pos);
-        if ((c & mask) == mask) {
-            // m.at(pos) = 'O';
-            // printMap(m);
-            return true;
-        }
-
-        m.at(pos) = static_cast<char>(c | mask);
-
         if (m.contains(pos + facing) && m(pos + facing) == '#') {
+            char mask;
+            if (facing == aoc::direction::UP) {
+                mask = MASK_UP;
+            } else if (facing == aoc::direction::DOWN) {
+                mask = MASK_DOWN;
+            } else if (facing == aoc::direction::LEFT) {
+                mask = MASK_LEFT;
+            } else {
+                mask = MASK_RIGHT;
+            }
+
+            const char c = m(pos);
+            if ((c & mask) == mask) {
+                // m.at(pos) = 'O';
+                // printMap(m);
+                return true;
+            }
+
+            m.at(pos) = static_cast<char>(c | mask);
+
             facing = aoc::direction::TURN_RIGHT * facing;
         } else {
             pos += facing;
@@ -164,7 +166,9 @@ void runDay(char* const buffer, const int length) {
             map mVirtual { virtualBuffer, m.width, m.height, m.lineLength };
             if (mVirtual.contains(pos + facing) && pos + facing != startPos) {
                 mVirtual.at(pos + facing) = '#';
-                if (runsInCircle(pos, facing, mVirtual)) {
+                if (runsInCircle(startPos, aoc::direction::UP, mVirtual)) {
+                    // printf("Optional boulder at (%d, %d)\n", (pos + facing).x , (pos + facing).y);
+                    // printMap(mVirtual);
                     part2++;
                 }
             }
