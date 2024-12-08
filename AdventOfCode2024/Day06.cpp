@@ -51,11 +51,6 @@ struct map {
     }
 };
 
-struct segment {
-    vec2i pos;
-    vec2i direction;
-};
-
 int signum(const int x) {
     return (x > 0) - (x < 0);
 }
@@ -156,23 +151,23 @@ void runDay(char* const buffer, const int length) {
     vec2i pos = startPos;
 
     while (pos.x >= 0 && pos.x < m.width && pos.y >= 0 && pos.y < m.height) {
-        m.at(pos) = 'X';
-
-        if (m.contains(pos + facing) && m(pos + facing) == '#') {
-            facing = aoc::direction::TURN_RIGHT * facing;
-        } else {
-            // Pretend there is a boulder!
-            memcpy(virtualBuffer, originalInput, sizeof(virtualBuffer));
-            map mVirtual { virtualBuffer, m.width, m.height, m.lineLength };
-            if (mVirtual.contains(pos + facing) && pos + facing != startPos) {
-                mVirtual.at(pos + facing) = '#';
+        if (m(pos) != 'X') {
+            if (pos != startPos) {
+                // Pretend there is a boulder!
+                memcpy(virtualBuffer, originalInput, sizeof(virtualBuffer));
+                map mVirtual { virtualBuffer, m.width, m.height, m.lineLength };
+                mVirtual.at(pos) = '#';
                 if (runsInCircle(startPos, aoc::direction::UP, mVirtual)) {
-                    // printf("Optional boulder at (%d, %d)\n", (pos + facing).x , (pos + facing).y);
-                    // printMap(mVirtual);
                     part2++;
                 }
             }
 
+            m.at(pos) = 'X';
+        }
+
+        if (m.contains(pos + facing) && m(pos + facing) == '#') {
+            facing = aoc::direction::TURN_RIGHT * facing;
+        } else {
             pos += facing;
         }
     }
