@@ -81,6 +81,10 @@ void runDay(char* const buffer, const int length) {
 
     memset(buffer, '.', length);
 
+    char bufferCopy[INPUT_BUFFER_SIZE];
+    memset(bufferCopy, '.', length);
+    const map mCopy { bufferCopy, m.width, m.height, m.lineLength };
+
     // part 1
     std::ranges::sort(stations, [] (const radio& a, const radio& b) {
         return a.frequency < b.frequency;
@@ -102,37 +106,21 @@ void runDay(char* const buffer, const int length) {
                 m.at(n1) = a.frequency;
                 part1++;
             }
-
-            // anti node on the antenna position
-            if (m(a.position) == '.') {
-                m.at(a.position) = a.frequency;
-                part2++;
-            }
-
-            // extend anti nodes to the edge of the map
-            for (n1 += d1; m.contains(n1); n1 += d1) {
-                if (m(n1) == '.') {
-                    m.at(n1) = a.frequency;
-                    part2++;
-                }
-            }
-
-            // anti node according to part 1
             if (m.contains(n2) && m(n2) == '.') {
                 m.at(n2) = a.frequency;
                 part1++;
             }
 
-            // anti node on the antenna position
-            if (m(b.position) == '.') {
-                m.at(b.position) = b.frequency;
-                part2++;
+            // anti node according to part 2
+            for (n1 = a.position; m.contains(n1); n1 += d1) {
+                if (mCopy(n1) == '.') {
+                    mCopy.at(n1) = a.frequency;
+                    part2++;
+                }
             }
-
-            // extend anti nodes to the edge of the map
-            for (n2 += d2; m.contains(n2); n2 += d2) {
-                if (m(n2) == '.') {
-                    m.at(n2) = a.frequency;
+            for (n2 = b.position; m.contains(n2); n2 += d2) {
+                if (mCopy(n2) == '.') {
+                    mCopy.at(n2) = a.frequency;
                     part2++;
                 }
             }
@@ -142,7 +130,7 @@ void runDay(char* const buffer, const int length) {
     // printMap(m);
 
     printf("%d\n",part1);
-    printf("%d\n",part1 + part2);
+    printf("%d\n",part2);
 }
 
 // BOILER PLATE CODE BELOW
