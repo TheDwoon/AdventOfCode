@@ -93,6 +93,13 @@ struct vec2 {
     }
 };
 
+template<>
+struct std::hash<vec2<int>> {
+    auto operator()(const vec2<int> &v) const noexcept {
+        return v.x ^ v.y;
+    }
+};
+
 typedef vec2<int> vec2i;
 typedef vec2<float> vec2f;
 typedef vec2<double> vec2d;
