@@ -193,7 +193,7 @@ void runDay(char* const buffer, const int length) {
 
 int main()
 {
-    char buffer[INPUT_BUFFER_SIZE];
+    char buffer[INPUT_BUFFER_SIZE] {};
     const int length = static_cast<int>(fread(buffer, 1, INPUT_BUFFER_SIZE, stdin));
 	runDay(buffer, length);
 }
