@@ -33,51 +33,9 @@ struct block {
     }
 };
 
-struct free_block {
-    int index;
-    int width;
-
-    friend bool operator<(const free_block& b1, const free_block& b2) {
-        return b1.index < b2.index;
-    }
-};
-
 struct indexed_block : block {
     int index;
 };
-
-void printDisk(const std::vector<block>& disk) {
-    for (const auto& block : disk) {
-        for (int i = 0; i < block.width; ++i) {
-            if (block.is_free()) {
-                printf(".");
-            } else {
-                printf("%c", block.file + '0');
-            }
-        }
-    }
-
-    printf("\n");
-}
-
-void printDisk(std::vector<indexed_block> disk, int diskLength) {
-    std::ranges::sort(disk.begin(), disk.end(), [](const auto& b1, const auto& b2) {
-        return b1.index < b2.index;
-    });
-
-    int idx = 0;
-    for (int i = 0; i < diskLength; ++i) {
-        if (idx < disk.size() && disk[idx].index + disk[idx].width <= i)
-            idx++;
-
-        if (idx < disk.size() && disk[idx].index <= i)
-            printf("%c", disk[idx].file + '0');
-        else
-            printf(".");
-    }
-
-    printf("\n");
-}
 
 block findLastUsedBlock(const std::vector<block> &disk, int &idx, const int lowerLimit = -1) noexcept {
     while (idx > lowerLimit && disk[idx].is_free()) {
@@ -103,7 +61,6 @@ void runDay(char* const buffer, const int length) {
     }
 
     const int original_disk_size = static_cast<int>(original_disk.size());
-    // printDisk(original_disk);
 
     std::vector<block> fragmented_compact_disk;
     int current_block_idx = 0;
@@ -152,11 +109,11 @@ void runDay(char* const buffer, const int length) {
     }
 
     // build free list
-    std::array<std::multiset<free_block>, MAX_BLOCK_LENGTH> free_lists;
+    std::array<std::multiset<int>, MAX_BLOCK_LENGTH> free_lists;
     int index = 0;
     for (const auto& block : original_disk) {
         if (block.is_free()) {
-            free_lists[block.width].emplace(index, block.width);
+            free_lists[block.width].emplace(index);
         }
 
         index += block.width;
@@ -176,9 +133,9 @@ void runDay(char* const buffer, const int length) {
         int slot_width_used = 0;
         int slot_index_used = original_disk_length;
         for (int width = block.width; width < MAX_BLOCK_LENGTH; width++) {
-            const std::multiset<free_block> &free_list = free_lists[width];
+            const std::multiset<int> &free_list = free_lists[width];
             if (!free_list.empty()) {
-                const int slot_index = free_list.begin()->index;
+                const int slot_index = *free_list.begin();
                 if (slot_index < slot_index_used) {
                     slot_width_used = width;
                     slot_index_used = slot_index;
@@ -189,26 +146,20 @@ void runDay(char* const buffer, const int length) {
         if (slot_width_used == 0 || slot_index_used > index) {
             // no space; just keep it at them same place
             file_optimized_disk.push_back({ block.file, block.width, index });
-            free_lists[block.width].emplace(index, block.width);
+            free_lists[block.width].emplace(index);
         } else {
-            std::multiset<free_block> &free_list = free_lists[slot_width_used];
+            std::multiset<int> &free_list = free_lists[slot_width_used];
             free_list.erase(free_list.begin());
 
             file_optimized_disk.push_back({ block.file, block.width, slot_index_used });
 
             if (slot_width_used > block.width) {
                 const int remaining_slot_width = slot_width_used - block.width;
-                free_lists[remaining_slot_width].emplace(slot_index_used + block.width, remaining_slot_width);
+                free_lists[remaining_slot_width].emplace(slot_index_used + block.width);
             }
         }
 
-        // printDisk(file_optimized_disk, original_disk_length);
     }
-
-    // // FIXME: debug remove
-    // std::ranges::sort(file_optimized_disk.begin(), file_optimized_disk.end(), [](const auto& b1, const auto& b2) {
-    //     return b1.index < b2.index;
-    // });
 
     // Compute results
     int64_t part1 = 0;
