@@ -9,7 +9,7 @@
 #include "parser.cpp"
 
 constexpr long INPUT_BUFFER_SIZE = 32 * 1024;
-constexpr int MAX_BLOCK_LENGTH = 16;
+constexpr int MAX_BLOCK_LENGTH = 10;
 
 struct block {
     int file;
