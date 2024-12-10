@@ -4,6 +4,10 @@
 #include "parser.cpp"
 #include "vec2.cpp"
 
+#ifndef NDEBUG
+#include <chrono>
+#endif
+
 constexpr long INPUT_BUFFER_SIZE = 32 * 1024;
 
 struct map {
@@ -137,7 +141,14 @@ void runDay(char* const buffer, const int length) {
 
 int main()
 {
+#ifndef NDEBUG
+    auto gt0 = std::chrono::high_resolution_clock::now();
+#endif
     char buffer[INPUT_BUFFER_SIZE] {};
     const int length = static_cast<int>(fread(buffer, 1, INPUT_BUFFER_SIZE, stdin));
-	runDay(buffer, length);
+    runDay(buffer, length);
+#ifndef NDEBUG
+    auto gt1 = std::chrono::high_resolution_clock::now();
+    printf("%.3f ms\n", (gt1 - gt0).count() / 1000000.0);
+#endif
 }
