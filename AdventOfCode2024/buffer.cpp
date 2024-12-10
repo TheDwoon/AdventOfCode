@@ -1,14 +1,12 @@
-#include <algorithm>
 #ifndef HEADER_BUFFER
 #define HEADER_BUFFER
-
+#include <algorithm>
 #include <cassert>
 
 namespace aoc {
 
-    template<typename T, int BUFFER_SIZE = 16>
+    template<typename T, unsigned int BUFFER_SIZE = 16>
     class ring_buffer {
-    private:
         T buffer[BUFFER_SIZE];
 
         unsigned int readPointer { 0 };
@@ -30,7 +28,7 @@ namespace aoc {
             return writePointer - readPointer;
         }
 
-        T& operator[](const int index) const noexcept {
+        T& operator[](const int index) noexcept {
             assert ((index + readPointer) < writePointer);
             return buffer[(index + readPointer) % BUFFER_SIZE];
         }
