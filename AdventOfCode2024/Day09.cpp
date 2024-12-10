@@ -4,9 +4,12 @@
 #include <set>
 #include <array>
 #include <algorithm>
-#include <bits/ranges_algo.h>
-
 #include "parser.cpp"
+
+#ifndef NDEBUG
+#include <chrono>
+#endif
+
 
 constexpr long INPUT_BUFFER_SIZE = 32 * 1024;
 constexpr int MAX_BLOCK_LENGTH = 10;
@@ -47,11 +50,13 @@ block findLastUsedBlock(const std::vector<block> &disk, int &idx, const int lowe
 
 void runDay(char* const buffer, const int length) {
     std::vector<block> original_disk;
+    int max_block_size = 0;
 
     int file_id = 0;
     for (int i = 0; i < length - 1; i++) {
         const int block_width = buffer[i] - '0';
         if (block_width > 0) {
+            max_block_size = std::max(max_block_size, block_width);
             if (i % 2 == 0) {
                 original_disk.emplace_back(file_id++, block_width);
             } else {
@@ -132,7 +137,7 @@ void runDay(char* const buffer, const int length) {
         assert (block.width < MAX_BLOCK_LENGTH);
         int slot_width_used = 0;
         int slot_index_used = original_disk_length;
-        for (int width = block.width; width < MAX_BLOCK_LENGTH; width++) {
+        for (int width = block.width; width <= max_block_size; width++) {
             const std::multiset<int> &free_list = free_lists[width];
             if (!free_list.empty()) {
                 const int slot_index = *free_list.begin();
