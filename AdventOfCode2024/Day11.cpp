@@ -60,6 +60,9 @@ void blink(std::list<uint64_t> &stones, const int blinks) {
     }
 }
 
+unsigned int cache_hit = 0;
+unsigned int cache_miss = 0;
+
 uint64_t blinkRecursive(const std::list<uint64_t> &stones, int total_blinks, const int blink_batch, std::unordered_map<uint64_t, std::list<uint64_t>> &blink_cache) {
     assert(total_blinks % blink_batch == 0);
     total_blinks -= blink_batch;
@@ -70,6 +73,9 @@ uint64_t blinkRecursive(const std::list<uint64_t> &stones, int total_blinks, con
             std::list<uint64_t> stone_sample { stone };
             blink(stone_sample, blink_batch);
             blink_cache[stone] = stone_sample;
+            cache_miss++;
+        } else {
+            cache_hit++;
         }
 
         const std::list<uint64_t> &stone_sample = blink_cache[stone];
@@ -85,30 +91,29 @@ uint64_t blinkRecursive(const std::list<uint64_t> &stones, int total_blinks, con
 
 void runDay(const char* const buffer, const int length) {
     uint64_t part1 = 0;
-    int part2 = 0;
+    uint64_t part2 = 0;
 
-    std::list<uint64_t> stones;
+    std::list<uint64_t> original_stones;
     Parser p(buffer);
     while (p.isNumeric()) {
         int stone;
         p.readNumber(stone);
-        stones.push_back(stone);
+        original_stones.push_back(stone);
         p.consume(' ');
     }
 
-    // blink(stones, 25);
-    // const int look_ahead = 5;
-    // std::unordered_map<uint64_t, std::list<uint64_t>> cache;
-    // for (int batch = 0; batch < 75 / look_ahead; ++batch) {
-    //     blink(stones, look_ahead);
-    // }
+    std::list<uint64_t> stones = original_stones;
+    blink(stones, 25);
+    part1 = stones.size();
 
     std::unordered_map<uint64_t, std::list<uint64_t>> blink_cache;
-    part1 = blinkRecursive(stones, 75, 25, blink_cache);
+    part2 = blinkRecursive(original_stones, 75, 25, blink_cache);
+
+    printf("Cache: %u | %u | %.2f%%\n", cache_hit, cache_miss, (double)cache_hit/(double)(cache_hit + cache_miss) * 100.0);
 
     // 199752 -> too low
     printf("%llu\n", part1);
-    printf("%d\n",part2);
+    printf("%llu\n",part2);
 }
 
 // BOILER PLATE CODE BELOW
