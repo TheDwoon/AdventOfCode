@@ -10,7 +10,7 @@ constexpr long INPUT_BUFFER_SIZE = 32 * 1024;
 
 
 void findCluster(const int x, const int y, const int cluster_number, const aoc::map<char> &plot_map, aoc::map<int> &cluster_map) {
-    std::unordered_set<vec2i> visited;
+    std::unordered_set<vec2i> visited { {x, y} };
     std::deque<vec2i> queue { {x, y} };
     while (!queue.empty()) {
         // put cluster number in cluster map
@@ -154,6 +154,8 @@ void runDay(char* const buffer, const int length) {
             cluster_perimeter[next_cluster] += 1;
         }
     }
+
+    std::unordered_map<int, int> cluster_sides;
 
 #ifndef NDEBUG
     printf("Areas:\n");
