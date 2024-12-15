@@ -16,6 +16,11 @@ struct vec2 {
 
     }
 
+    [[nodiscard]]
+    T length2() const {
+        return x * x + y * y;
+    }
+
     vec2& operator+=(const vec2<T>& other) {
         x += other.x;
         y += other.y;
