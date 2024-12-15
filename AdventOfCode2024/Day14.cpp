@@ -9,7 +9,7 @@
 constexpr long INPUT_BUFFER_SIZE = 32 * 1024;
 constexpr int MAP_WIDTH = 101;
 constexpr int MAP_HEIGHT = 103;
-constexpr int SIGNIFICANT_EASTER_EGG_CLUSTER = 100;
+constexpr int SIGNIFICANT_EASTER_EGG_CLUSTER = 80;
 constexpr int MAX_SECONDS_CHECKED = 10000;
 
 struct robot {
@@ -102,6 +102,7 @@ void runDay(const char* const buffer, const int length) {
     constexpr int CLUSTER_SIZE = CLUSTER_WIDTH * CLUSTER_HEIGHT;
     int clusters[CLUSTER_SIZE];
     int max_robots_in_cluster = 0;
+    int current_robots_in_cluster = 0;
     do {
         seconds += 1;
         for (auto&[position, velocity] : easter_robots) {
@@ -119,12 +120,13 @@ void runDay(const char* const buffer, const int length) {
             clusters[c_y * CLUSTER_WIDTH + c_x] += 1;
         }
 
-        max_robots_in_cluster = *std::max_element(clusters, clusters + CLUSTER_SIZE);
+        current_robots_in_cluster = *std::max_element(clusters, clusters + CLUSTER_SIZE);
+        max_robots_in_cluster = std::max(current_robots_in_cluster, max_robots_in_cluster);
 
 #ifndef NDEBUG
-        printf("max_robots_in_cluster: %d\n", max_robots_in_cluster);
+        printf("max_robot_cluster: %d\n", max_robots_in_cluster);
 #endif
-    } while (max_robots_in_cluster < SIGNIFICANT_EASTER_EGG_CLUSTER);
+    } while (current_robots_in_cluster < SIGNIFICANT_EASTER_EGG_CLUSTER && seconds < MAX_SECONDS_CHECKED);
 
     part2 = seconds;
 
@@ -132,8 +134,8 @@ void runDay(const char* const buffer, const int length) {
     printMap(easter_robots);
 #endif
 
-    printf("%d\n",part1);
-    printf("%d\n",part2);
+    printf("%d\n", part1);
+    printf("%d\n", part2);
 }
 
 // BOILER PLATE CODE BELOW
