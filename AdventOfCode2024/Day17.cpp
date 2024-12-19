@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <cstring>
 #include <iostream>
 #include <vector>
@@ -8,9 +9,9 @@ constexpr long INPUT_BUFFER_SIZE = 32 * 1024;
 
 struct processor {
     int program_counter{0};
-    int register_a;
-    int register_b;
-    int register_c;
+    uint64_t register_a;
+    uint64_t register_b;
+    uint64_t register_c;
 
     std::vector<unsigned char> memory;
     std::vector<unsigned char> output;
@@ -45,7 +46,7 @@ processor parseProcessor(const char* const buffer) {
     return proc;
 }
 
-int decode_combo_operand(const processor &processor, const unsigned char operand) {
+uint64_t decode_combo_operand(const processor &processor, const unsigned char operand) {
     switch (operand) {
         case 0:
         case 1:
@@ -90,12 +91,12 @@ void run_program(processor &p) {
         const unsigned char literal_operand = p.memory[p.program_counter + 1];
 
 #ifndef NDEBUG
-        printProcessorDebug(p, op_code, literal_operand);
+        // printProcessorDebug(p, op_code, literal_operand);
 #endif
 
         switch (op_code) {
             case 0: // adv
-                p.register_a = p.register_a / (1 << decode_combo_operand(p, literal_operand));
+                p.register_a = p.register_a / (1ULL << decode_combo_operand(p, literal_operand));
                 p.program_counter += 2;
                 break;
             case 1: // bxl
@@ -122,17 +123,41 @@ void run_program(processor &p) {
                 p.program_counter += 2;
                 break;
             case 6: // bdv
-                p.register_b = p.register_a / (1 << decode_combo_operand(p, literal_operand));
+                p.register_b = p.register_a / (1ULL << decode_combo_operand(p, literal_operand));
                 p.program_counter += 2;
                 break;
             case 7: // cdv
-                p.register_c = p.register_a / (1 << decode_combo_operand(p, literal_operand));
+                p.register_c = p.register_a / (1ULL << decode_combo_operand(p, literal_operand));
                 p.program_counter += 2;
                 break;
             default:
                 std::exit(1);
         }
     }
+}
+
+void printProcessorOutput(const std::vector<unsigned char> &out) {
+    for (int i = 0; i < out.size(); i++) {
+        if (i > 0)
+            printf(",");
+        printf("%d", out[i]);
+    }
+    printf("\n");
+}
+
+bool isInvalidPartial(const std::vector<unsigned char> &current, const std::vector<unsigned char> &expected, const int index) {
+    if (current.empty() || current.size() > expected.size() || index >= current.size())
+        return true;
+
+    const auto current_size = current.size();
+    const auto expected_size = expected.size();
+
+    for (int i = 0; i < current_size && i <= index; i++) {
+        if (current[current_size - 1 - i] != expected[expected_size - 1 - i])
+            return true;
+    }
+
+    return false;
 }
 
 void runDay(const char* const buffer, const int length) {
@@ -143,12 +168,39 @@ void runDay(const char* const buffer, const int length) {
     run_program(corrupted_run);
 
     printf("Part 1: ");
-    for (int i = 0; i < corrupted_run.output.size(); i++) {
-        if (i > 0)
-            printf(",");
-        printf("%d", corrupted_run.output[i]);
+    printProcessorOutput(corrupted_run.output);
+
+    // Part 2
+    constexpr int MAX_ATTEMPTS = 0xFFFF;
+    uint64_t partial_solution = 0;
+    processor p;
+    const std::vector<unsigned char> &expected_output = corrupted_run.memory;
+    for (int i = 0; i < expected_output.size(); i++) {
+        uint64_t current_attempt {0};
+        uint64_t j = 0;
+        for (; j < MAX_ATTEMPTS && isInvalidPartial(p.output, expected_output, i); j++) {
+            current_attempt = partial_solution ^ j;
+            p = original_processor;
+            p.register_a = current_attempt;
+            run_program(p);
+        }
+
+        printf("Partial Output: ");
+        printProcessorOutput(p.output);
+        printf("Expected Output: ");
+        printProcessorOutput(expected_output);
+
+        if (j == MAX_ATTEMPTS) {
+            printf("Step found no viable option");
+            std::exit(1);
+        }
+
+        printf("Found %d digit with: %llu\n\n", (i + 1), current_attempt);
+
+        if (current_attempt != 0)
+            partial_solution = current_attempt << 3;
+
     }
-    printf("\n");
 }
 
 // BOILER PLATE CODE BELOW
