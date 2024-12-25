@@ -26,6 +26,7 @@ add_executable(Day16 Day16.cpp)
 add_executable(Day17 Day17.cpp)
 add_executable(Day18 Day18.cpp)
 add_executable(Day19 Day19.cpp)
+add_executable(Day24 Day24.cpp)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ofast")
