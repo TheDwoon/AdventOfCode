@@ -13,12 +13,13 @@ constexpr char RED = 'r';
 constexpr char GREEN = 'g';
 
 struct node {
-    char color;
-    node* next[5];
+    char color { '_' };
+    bool leaf { false };
+    node* next[5] { nullptr };
 };
 
-int getTowelIndex(const char stripe) {
-    switch (stripe) {
+int getColorIndex(const char color) {
+    switch (color) {
         case WHITE:
             return 0;
         case BLUE:
@@ -34,48 +35,45 @@ int getTowelIndex(const char stripe) {
     }
 }
 
-bool checkPattern(const std::vector<char>& pattern, const std::vector<char>& stripe, const int index) {
-    for (int i = 0; i < stripe.size(); i++) {
-        if (index + i >= pattern.size() || pattern[index + i] != stripe[i]) {
-            return false;
+void buildTree(node* root, const std::vector<char> &pattern) {
+    node* current = root;
+    for (int i = 0; i < pattern.size(); i++) {
+        const int color_index = getColorIndex(pattern[i]);
+        if (current->next[color_index] == nullptr) {
+            node* next_node = new node();
+            next_node->color = pattern[i];
+            current->next[color_index] = next_node;
+        }
+
+        current = current->next[color_index];
+    }
+
+    current->leaf = true;
+}
+
+bool checkTree(node* root, const std::vector<char> &pattern) {
+    node* current = root;
+    for (int i = 0; i < pattern.size(); i++) {
+        const int color_index = getColorIndex(pattern[i]);
+        if (current->next[color_index] == nullptr) {
+            if (current->leaf && root->next[color_index] != nullptr) {
+                current = root->next[color_index];
+            } else {
+                return false;
+            }
+        } else {
+            current = current->next[color_index];
         }
     }
 
     return true;
 }
 
-int canProducePattern(const std::vector<std::vector<char>> *pattern_tree, const std::vector<char> &pattern) {
-    int matches = 0;
-
-    std::deque<int> queue { 0 };
-    while (!queue.empty()) {
-        const int index = queue.front();
-        queue.pop_front();
-
-        const int towelIndex = getTowelIndex(pattern[index]);
-        const std::vector<std::vector<char>> &available_patterns = pattern_tree[towelIndex];
-        for (const std::vector<char>& partial_pattern : available_patterns) {
-            if (checkPattern(pattern, partial_pattern, index)) {
-                const int next_index = static_cast<int>(partial_pattern.size()) + index;
-                if (next_index == pattern.size()) {
-                    matches++;
-                } else {
-                    assert(next_index < pattern.size());
-                    queue.push_back(next_index);
-                }
-            }
-        }
-    }
-
-    return matches;
-}
-
 void runDay(const char* buffer, const int length) {
     int part1 = 0;
     int part2 = 0;
 
-    std::vector<std::vector<char>> towels[5];
-
+    node* const root = new node();
     std::vector<char> pattern;
     pattern.reserve(8);
 
@@ -90,17 +88,13 @@ void runDay(const char* buffer, const int length) {
                 pattern.push_back(c);
                 break;
             case ',':
-                const int towelIndex = getTowelIndex(pattern[0]);
-                assert(towelIndex != -1);
-                towels[towelIndex].push_back(pattern);
+                buildTree(root, pattern);
                 pattern.clear();
                 break;
         }
     }
 
-    const int towelIndex = getTowelIndex(pattern[0]);
-    assert(towelIndex != -1);
-    towels[towelIndex].push_back(pattern);
+    buildTree(root, pattern);
     pattern.clear();
 
     buffer += 2;
@@ -124,7 +118,7 @@ void runDay(const char* buffer, const int length) {
 
     for (const std::vector<char>& suggested_pattern : suggested_patterns) {
         printf("A line!\n");
-        if (canProducePattern(towels, suggested_pattern) > 0) {
+        if (checkTree(root, suggested_pattern)) {
             part1++;
         }
     }
