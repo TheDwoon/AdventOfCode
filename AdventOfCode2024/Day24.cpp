@@ -98,8 +98,20 @@ bool is_input_gate(const std::array<char, 3> &gate_name) {
     return gate_name[0] == 'x' || gate_name[0] == 'y';
 }
 
+bool is_input_gate(const gate& gate) {
+    return is_input_gate(gate.input_a) && is_input_gate(gate.input_b);
+}
+
 bool is_carry_gate(const gate& gate) {
     return gate.operation == OR;
+}
+
+bool is_stage_1_and(const gate& gate) {
+    return is_input_gate(gate) && gate.operation == AND;
+}
+
+bool is_stage_1_xor(const gate& gate) {
+    return is_input_gate(gate) && gate.operation == XOR;
 }
 
 const gate& get_gate(const std::map<std::array<char, 3>, gate> &gates, const std::array<char, 3> &gate_name) {
@@ -118,17 +130,20 @@ bool is_full_adder_carry(const std::map<std::array<char, 3>, gate> &gates, const
     const gate& carry_a = get_gate(gates, carry_gate.input_a);
     const gate& carry_b = get_gate(gates, carry_gate.input_b);
 
-    if (carry_a.operation != AND) {
-        invalid_gates.insert(carry_gate.input_a);
+    // Gate structure does not match. Check both gate types and return them as a swapped gate as needed
+    if (carry_a.operation != AND || carry_b.operation != AND) {
+        if (carry_a.operation != AND) {
+            invalid_gates.insert(carry_gate.input_a);
+        }
+
+        if (carry_b.operation != AND) {
+            invalid_gates.insert(carry_gate.input_b);
+        }
+
         return false;
     }
 
-    if (carry_b.operation != AND) {
-        invalid_gates.insert(carry_gate.input_b);
-        return false;
-    }
-
-    if (is_input_gate(carry_a.input_a) && is_input_gate(carry_a.input_b)) {
+    if (is_input_gate(carry_a)) {
         const gate& stage_a = get_gate(gates, carry_b.input_a);
         const gate& stage_b = get_gate(gates, carry_b.input_b);
 
@@ -137,15 +152,29 @@ bool is_full_adder_carry(const std::map<std::array<char, 3>, gate> &gates, const
         } else if (stage_a.operation == OR && stage_b.operation == XOR) {
             return true;
         } else {
-            if (!(stage_a.operation == AND && is_input_gate(stage_a.input_a) && is_input_gate(stage_a.input_b))
-                && !(stage_b.operation == AND && is_input_gate(stage_b.input_a) && is_input_gate(stage_b.input_b))) {
-                invalid_gates.insert(carry_gate.input_b);
-                return false;
-            } else {
+            if ((stage_a.operation == AND && is_input_gate(stage_a.input_a) && is_input_gate(stage_a.input_b))
+                || (stage_b.operation == AND && is_input_gate(stage_b.input_a) && is_input_gate(stage_b.input_b))) {
+                // special case when checking z01
                 return true;
             }
+
+            if (stage_a.operation == AND) {
+                invalid_gates.insert(carry_b.input_a);
+            } else if (stage_a.operation == XOR && !is_input_gate(stage_a)) {
+                // not a stage one XOR
+                invalid_gates.insert(carry_b.input_a);
+            }
+
+            if (stage_b.operation == AND) {
+                invalid_gates.insert(carry_b.input_b);
+            } else if (stage_b.operation == XOR && !is_input_gate(stage_b)) {
+                // not a stage one XOR
+                invalid_gates.insert(carry_b.input_b);
+            }
+
+            return false;
         }
-    } else if (is_input_gate(carry_b.input_a) && is_input_gate(carry_b.input_b)) {
+    } else if (is_input_gate(carry_b)) {
         const gate& stage_a = get_gate(gates, carry_a.input_a);
         const gate& stage_b = get_gate(gates, carry_a.input_b);
 
@@ -154,14 +183,27 @@ bool is_full_adder_carry(const std::map<std::array<char, 3>, gate> &gates, const
         } else if (stage_a.operation == OR && stage_b.operation == XOR) {
             return true;
         } else {
-            if (!(stage_a.operation == AND && is_input_gate(stage_a.input_a) && is_input_gate(stage_a.input_b))
-                && !(stage_b.operation == AND && is_input_gate(stage_b.input_a) && is_input_gate(stage_b.input_b))) {
-                // FIXME: If stage_a and stage_b are both XOR; I have no idea which one is fed
-                invalid_gates.insert(carry_gate.input_a);
-                return false;
-            } else {
+            if ((stage_a.operation == AND && is_input_gate(stage_a.input_a) && is_input_gate(stage_a.input_b))
+                || (stage_b.operation == AND && is_input_gate(stage_b.input_a) && is_input_gate(stage_b.input_b))) {
+                // special case when checking z01
                 return true;
             }
+
+            if (stage_a.operation == AND) {
+                invalid_gates.insert(carry_a.input_a);
+            } else if (stage_a.operation == XOR && !is_input_gate(stage_a)) {
+                // not a stage one XOR
+                invalid_gates.insert(carry_a.input_a);
+            }
+
+            if (stage_b.operation == AND) {
+                invalid_gates.insert(carry_a.input_b);
+            } else if (stage_b.operation == XOR && !is_input_gate(stage_b)) {
+                // not a stage one XOR
+                invalid_gates.insert(carry_a.input_b);
+            }
+
+            return false;
         }
     } else {
         if (is_input_gate(carry_a.input_a) || is_input_gate(carry_a.input_b)) {
@@ -237,14 +279,6 @@ void runDay(const char* const buffer, const int length) {
         std::array<char, 3> gate_name { 'z', static_cast<char>(i / 10 + '0'), static_cast<char>(i % 10 + '0') };
         is_full_adder(gates, gate_name, invalid_gates);
     }
-
-    // know fucked
-    // z10
-    // mkk
-    // wjb
-    // cvp
-
-    // cvp,mkk,skc,wcb,wjb,z10,z14,z34 -> wrong
 
     printf("Part 1: %llu\n",part1);
     printf("Part 2: ");
