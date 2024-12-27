@@ -13,6 +13,10 @@ public:
 
     }
 
+    void global_seek(const int offset) {
+        current = start + offset;
+    }
+
     bool consume(char c) {
         if (c != '\0' && *current == c) {
             return ++current;
@@ -44,7 +48,8 @@ public:
         }
     }
 
-    char peek() {
+    [[nodiscard]]
+    char peek() const {
         return *current;
     }
 
@@ -175,6 +180,28 @@ public:
                 else if (current[offset + i] == '\0')
                     return false;
             }
+
+            offset++;
+        }
+
+        return false;
+    }
+
+    bool findNext(const char* str, int &offset) const {
+        offset = 0;
+        while (current[offset] != '\0') {
+            while (current[offset] != '\0' && current[offset] != str[0]) {
+                offset++;
+            }
+
+            for (unsigned int i = 0; current[offset + i] == str[i] || str[i] == '\0'; ++i) {
+                if (str[i] == '\0')
+                    return true;
+                else if (current[offset + i] == '\0')
+                    return false;
+            }
+
+            offset++;
         }
 
         return false;
