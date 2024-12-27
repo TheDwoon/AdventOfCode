@@ -101,7 +101,7 @@ struct vec2 {
 template<>
 struct std::hash<vec2<int>> {
     auto operator()(const vec2<int> &v) const noexcept {
-        return v.x ^ v.y;
+        return (v.y << 16) ^ v.x;
     }
 };
 
