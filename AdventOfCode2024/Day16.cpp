@@ -16,10 +16,6 @@ constexpr char MAP_WALL = '#';
 constexpr char MAP_START = 'S';
 constexpr char MAP_END = 'E';
 
-int get_heuristic_cost(const vec2i &pos, const vec2i &target) {
-    return abs(pos.x - target.x) + abs(pos.y - target.y);
-}
-
 struct pose {
     vec2i position;
     vec2i facing;
@@ -64,6 +60,29 @@ struct path_node {
     }
 };
 
+struct cost_map {
+    path_node* data;
+    int map_width;
+
+    cost_map(const int map_width, const int map_height) : map_width(map_width) {
+        data = new path_node[map_width * map_height * 4]();
+    }
+
+    path_node& operator()(const pose &p) const {
+        int facing_index;
+        if (p.facing.x == 1)
+            facing_index = 0;
+        else if (p.facing.y == -1)
+            facing_index = 1;
+        else if (p.facing.x == -1)
+            facing_index = 2;
+        else
+            facing_index = 3;
+
+        return data[(p.position.y * map_width + p.position.x) * 4 + facing_index];
+    }
+};
+
 void runDay(char* const buffer, const int length) {
     int part1 = 0;
     int part2 = 0;
@@ -92,7 +111,7 @@ void runDay(char* const buffer, const int length) {
         }
     }
 
-    std::unordered_map<pose, path_node> cost_map;
+    cost_map cm(m.width, m.height);
 
     std::priority_queue<node> queue;
     queue.emplace(start_position, aoc::direction::EAST, 0);
@@ -100,33 +119,33 @@ void runDay(char* const buffer, const int length) {
         const node n = queue.top();
         queue.pop();
 
-        cost_map[n.current_pose].update(n.previous_pose, n.cost);
+        cm(n.current_pose).update(n.previous_pose, n.cost);
 
-        if (const node forward(n, n.current_pose.position + n.current_pose.facing, n.current_pose.facing, n.cost + 1); m(forward.current_pose.position) == MAP_FREE && forward.cost <= cost_map[forward.current_pose].cost) {
+        if (const node forward(n, n.current_pose.position + n.current_pose.facing, n.current_pose.facing, n.cost + 1); m(forward.current_pose.position) == MAP_FREE && forward.cost <= cm(forward.current_pose).cost) {
             queue.emplace(forward);
         }
-        if (const node turn_left(n, n.current_pose.position, aoc::direction::TURN_LEFT * n.current_pose.facing, n.cost + 1000); m(turn_left.current_pose.position + turn_left.current_pose.facing) == MAP_FREE && turn_left.cost <= cost_map[turn_left.current_pose].cost) {
+        if (const node turn_left(n, n.current_pose.position, aoc::direction::TURN_LEFT * n.current_pose.facing, n.cost + 1000); m(turn_left.current_pose.position + turn_left.current_pose.facing) == MAP_FREE && turn_left.cost <= cm(turn_left.current_pose).cost) {
             queue.emplace(turn_left);
         }
-        if (const node turn_right(n, n.current_pose.position, aoc::direction::TURN_RIGHT * n.current_pose.facing, n.cost + 1000); m(turn_right.current_pose.position + turn_right.current_pose.facing) == MAP_FREE && turn_right.cost <= cost_map[turn_right.current_pose].cost) {
+        if (const node turn_right(n, n.current_pose.position, aoc::direction::TURN_RIGHT * n.current_pose.facing, n.cost + 1000); m(turn_right.current_pose.position + turn_right.current_pose.facing) == MAP_FREE && turn_right.cost <= cm(turn_right.current_pose).cost) {
             queue.emplace(turn_right);
         }
     }
 
     const pose finish_up { end_position, aoc::direction::UP };
-    const path_node cost_map_up = cost_map[finish_up];
+    const path_node& cost_map_up = cm(finish_up);
     int best_path_cost = cost_map_up.cost;
 
     const pose finish_down { end_position, aoc::direction::DOWN };
-    const path_node cost_map_down = cost_map[finish_down];
+    const path_node& cost_map_down = cm(finish_down);
     best_path_cost = std::min(best_path_cost, cost_map_down.cost);
 
     const pose finish_left { end_position, aoc::direction::LEFT };
-    const path_node cost_map_left = cost_map[finish_left];
+    const path_node& cost_map_left = cm(finish_left);
     best_path_cost = std::min(best_path_cost, cost_map_left.cost);
 
     const pose finish_right { end_position, aoc::direction::RIGHT };
-    const path_node cost_map_right = cost_map[finish_right];
+    const path_node& cost_map_right = cm(finish_right);
     best_path_cost = std::min(best_path_cost, cost_map_right.cost);
 
     std::unordered_set<vec2i> best_path_segments;
@@ -135,13 +154,13 @@ void runDay(char* const buffer, const int length) {
         const pose p = path_queue.front();
         path_queue.pop_front();
 
-        auto it = cost_map.find(p);
-        if (it == cost_map.end() || it->second.cost > best_path_cost) {
+        const path_node& pn = cm(p);
+        if (pn.cost > best_path_cost) {
             continue;
         }
 
         best_path_segments.insert(p.position);
-        for (const pose &pose : it->second.previous) {
+        for (const pose &pose : pn.previous) {
             if (p != pose) {
                 path_queue.push_back(pose);
             }
