@@ -100,25 +100,24 @@ struct node {
     }
 };
 
-struct worst_score {
-    bool operator()(const node& n1, const node& n2) const noexcept {
-        return n1.total_cost < n2.total_cost;
-    }
-};
-
 struct best_score {
     bool operator()(const node& n1, const node& n2) const noexcept {
         return n1.total_cost > n2.total_cost;
     }
 };
 
-node find_worst_path(const map& m, const vec2i &initial_position, const vec2i &final_position) {
+node find_best_path(const map& m, const vec2i &initial_position, const vec2i &final_position) {
     std::unordered_set<pose> visited;
     std::priority_queue<node, std::vector<node>, best_score> queue;
     queue.emplace(initial_position, aoc::direction::EAST, 0, final_position);
     while (!queue.empty()) {
         const node n = queue.top();
         queue.pop();
+        if (visited.contains(n.p))
+            continue;
+        else
+            visited.insert(n.p);
+
         if (n.p.position == final_position)
             return n;
 
@@ -132,15 +131,12 @@ node find_worst_path(const map& m, const vec2i &initial_position, const vec2i &f
 
         const char next_tile = m(forward.position);
         if (next_tile == MAP_FREE && !visited.contains(forward)) {
-            visited.insert(forward);
             queue.emplace(n, forward, 1, final_position);
         }
         if (!visited.contains(turn_left)) {
-            visited.insert(turn_left);
             queue.emplace(n, turn_left, 1000, final_position);
         }
         if (!visited.contains(turn_right)) {
-            visited.insert(turn_right);
             queue.emplace(n, turn_right, 1000, final_position);
         }
     }
@@ -176,7 +172,7 @@ void runDay(char* const buffer, const int length) {
         }
     }
 
-    node n = find_worst_path(m, start_position, final_position);
+    node n = find_best_path(m, start_position, final_position);
 
     printf("%d\n", n.total_cost);
     printf("%d\n",part2);
