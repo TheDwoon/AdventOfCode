@@ -2,7 +2,9 @@
 #include <memory>
 #include <unordered_set>
 #include <queue>
+#include <unordered_map>
 
+#include "util.cpp"
 #include "directions.cpp"
 #include "vec2.cpp"
 #include "parser.cpp"
@@ -13,44 +15,6 @@ constexpr char MAP_FREE = '.';
 constexpr char MAP_WALL = '#';
 constexpr char MAP_START = 'S';
 constexpr char MAP_END = 'E';
-
-struct map {
-    char *const buffer;
-    const int width;
-    const int height;
-    const int lineLength;
-
-    [[nodiscard]]
-    bool contains(const vec2i &pos) const {
-        return pos.x >= 0 && pos.x < width && pos.y >= 0 && pos.y < height;
-    }
-
-    [[nodiscard]]
-    char &at(const int x, const int y) const {
-        assert(x >= 0 && x < width);
-        assert(y >= 0 && y < height);
-        return buffer[y * lineLength + x];
-    }
-
-    [[nodiscard]]
-    char &at(const vec2i &pos) const {
-        assert(pos.x >= 0 && pos.x < width);
-        assert(pos.y >= 0 && pos.y < height);
-        return buffer[pos.y * lineLength + pos.x];
-    }
-
-    char operator()(const vec2i &pos) const {
-        assert(pos.x >= 0 && pos.x < width);
-        assert(pos.y >= 0 && pos.y < height);
-        return buffer[pos.y * lineLength + pos.x];
-    }
-
-    char operator()(const int x, const int y) const {
-        assert(x >= 0 && x < width);
-        assert(y >= 0 && y < height);
-        return buffer[y * lineLength + x];
-    }
-};
 
 int get_heuristic_cost(const vec2i &pos, const vec2i &target) {
     return abs(pos.x - target.x) + abs(pos.y - target.y);
@@ -73,76 +37,32 @@ struct std::hash<pose> {
 };
 
 struct node {
-    pose p;
-    int actual_cost;
-    int expected_cost;
-    int total_cost;
-    std::shared_ptr<node> previous;
+    pose previous_pose;
+    pose current_pose;
+    int cost;
 
-    node() = default;
-    node(const pose& p, const int actual_cost, const int expected_cost, const int total_cost, const std::shared_ptr<node> &previous) : p(p), actual_cost(actual_cost), expected_cost(expected_cost), total_cost(total_cost), previous(previous) {
+    node(const vec2i position, const vec2i facing, const int cost) : previous_pose(position, facing), current_pose(position, facing), cost(cost) {}
+    node(const node& previous_node, const vec2i current_position, const vec2i current_facing, const int cost) : previous_pose(previous_node.current_pose.position, previous_node.current_pose.facing), current_pose(current_position, current_facing), cost(cost) {}
 
-    }
-    node(const vec2i position, const vec2i facing, const int actual_cost, const vec2i &target_position) : p(position, facing), actual_cost(actual_cost) {
-        expected_cost = get_heuristic_cost(position, target_position);
-        total_cost = expected_cost + actual_cost;
-    }
-
-    node(const node& previous_node, const pose& current_pose, const int cost_step, const vec2i& target_position) : p(current_pose) {
-        actual_cost = previous_node.actual_cost + cost_step;
-        expected_cost = get_heuristic_cost(current_pose.position, target_position);
-        total_cost = expected_cost + actual_cost;
-        previous = std::make_shared<node>(previous_node.p, previous_node.actual_cost, previous_node.expected_cost, previous_node.total_cost, previous_node.previous);
-    }
-
-    friend bool operator<(const node &a, const node &b) noexcept {
-        return a.total_cost < b.total_cost;
+    friend bool operator<(const node &p1, const node &p2) {
+        return p1.cost > p2.cost;
     }
 };
 
-struct best_score {
-    bool operator()(const node& n1, const node& n2) const noexcept {
-        return n1.total_cost > n2.total_cost;
+struct path_node {
+    int cost { 1000000 };
+    std::unordered_set<pose> previous;
+
+    void update(const pose& previous_position, const int updated_cost) {
+        if (updated_cost < cost) {
+            cost = updated_cost;
+            previous.clear();
+            previous.insert(previous_position);
+        } else if (updated_cost == cost) {
+            previous.insert(previous_position);
+        }
     }
 };
-
-node find_best_path(const map& m, const vec2i &initial_position, const vec2i &final_position) {
-    std::unordered_set<pose> visited;
-    std::priority_queue<node, std::vector<node>, best_score> queue;
-    queue.emplace(initial_position, aoc::direction::EAST, 0, final_position);
-    while (!queue.empty()) {
-        const node n = queue.top();
-        queue.pop();
-        if (visited.contains(n.p))
-            continue;
-        else
-            visited.insert(n.p);
-
-        if (n.p.position == final_position)
-            return n;
-
-#ifndef NDEBUG
-        printf("Checking: (%2d, %2d) (%2d, %2d) [%5d (%5d + %3d)]\n", n.p.position.x, n.p.position.y, n.p.facing.x, n.p.facing.y, n.total_cost, n.actual_cost, n.expected_cost);
-#endif
-
-        pose forward { n.p.position + n.p.facing, n.p.facing };
-        pose turn_left { n.p.position, aoc::direction::TURN_LEFT * n.p.facing };
-        pose turn_right { n.p.position, aoc::direction::TURN_RIGHT * n.p.facing };
-
-        const char next_tile = m(forward.position);
-        if (next_tile == MAP_FREE && !visited.contains(forward)) {
-            queue.emplace(n, forward, 1, final_position);
-        }
-        if (!visited.contains(turn_left)) {
-            queue.emplace(n, turn_left, 1000, final_position);
-        }
-        if (!visited.contains(turn_right)) {
-            queue.emplace(n, turn_right, 1000, final_position);
-        }
-    }
-
-    return {};
-}
 
 void runDay(char* const buffer, const int length) {
     int part1 = 0;
@@ -153,9 +73,9 @@ void runDay(char* const buffer, const int length) {
     p.findNext("\n", map_width);
 
     vec2i start_position;
-    vec2i final_position;
+    vec2i end_position;
 
-    map m { buffer, map_width, length / (map_width + 1), map_width + 1 };
+    aoc::map m { buffer, map_width, length / (map_width + 1), map_width + 1 };
     for (int y = 0; y < m.height; y++) {
         for (int x = 0; x < m.width; x++) {
             const char c = m(x, y);
@@ -165,17 +85,72 @@ void runDay(char* const buffer, const int length) {
                     m.at(x, y) = MAP_FREE;
                     break;
                 case MAP_END:
-                    final_position = vec2i(x, y);
+                    end_position = vec2i(x, y);
                     m.at(x, y) = MAP_FREE;
                     break;
             }
         }
     }
 
-    node n = find_best_path(m, start_position, final_position);
+    std::unordered_map<pose, path_node> cost_map;
 
-    printf("%d\n", n.total_cost);
-    printf("%d\n",part2);
+    std::priority_queue<node> queue;
+    queue.emplace(start_position, aoc::direction::EAST, 0);
+    while (!queue.empty()) {
+        const node n = queue.top();
+        queue.pop();
+
+        cost_map[n.current_pose].update(n.previous_pose, n.cost);
+
+        if (const node forward(n, n.current_pose.position + n.current_pose.facing, n.current_pose.facing, n.cost + 1); m(forward.current_pose.position) == MAP_FREE && forward.cost <= cost_map[forward.current_pose].cost) {
+            queue.emplace(forward);
+        }
+        if (const node turn_left(n, n.current_pose.position, aoc::direction::TURN_LEFT * n.current_pose.facing, n.cost + 1000); m(turn_left.current_pose.position + turn_left.current_pose.facing) == MAP_FREE && turn_left.cost <= cost_map[turn_left.current_pose].cost) {
+            queue.emplace(turn_left);
+        }
+        if (const node turn_right(n, n.current_pose.position, aoc::direction::TURN_RIGHT * n.current_pose.facing, n.cost + 1000); m(turn_right.current_pose.position + turn_right.current_pose.facing) == MAP_FREE && turn_right.cost <= cost_map[turn_right.current_pose].cost) {
+            queue.emplace(turn_right);
+        }
+    }
+
+    const pose finish_up { end_position, aoc::direction::UP };
+    const path_node cost_map_up = cost_map[finish_up];
+    int best_path_cost = cost_map_up.cost;
+
+    const pose finish_down { end_position, aoc::direction::DOWN };
+    const path_node cost_map_down = cost_map[finish_down];
+    best_path_cost = std::min(best_path_cost, cost_map_down.cost);
+
+    const pose finish_left { end_position, aoc::direction::LEFT };
+    const path_node cost_map_left = cost_map[finish_left];
+    best_path_cost = std::min(best_path_cost, cost_map_left.cost);
+
+    const pose finish_right { end_position, aoc::direction::RIGHT };
+    const path_node cost_map_right = cost_map[finish_right];
+    best_path_cost = std::min(best_path_cost, cost_map_right.cost);
+
+    std::unordered_set<vec2i> best_path_segments;
+    std::deque<pose> path_queue { finish_up, finish_down, finish_left , finish_right };
+    while (!path_queue.empty()) {
+        const pose p = path_queue.front();
+        path_queue.pop_front();
+
+        auto it = cost_map.find(p);
+        if (it == cost_map.end() || it->second.cost > best_path_cost) {
+            continue;
+        }
+
+        best_path_segments.insert(p.position);
+        for (const pose &pose : it->second.previous) {
+            if (p != pose) {
+                path_queue.push_back(pose);
+            }
+        }
+    }
+
+    // 455 -> too low
+    printf("%d\n", best_path_cost);
+    printf("%llu\n", best_path_segments.size());
 }
 
 // BOILER PLATE CODE BELOW
