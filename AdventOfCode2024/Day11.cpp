@@ -25,68 +25,49 @@ int countDigits(uint64_t x) {
     // return static_cast<int>(std::ceil(std::log10(x)));
 }
 
-void blink(std::list<uint64_t> &stones, const int blinks) {
-#ifndef NDEBUG
-    // printf("Blink: 0\n");
-    // printStones(stones);
-#endif
-
-    for (int blink = 1; blink <= blinks; blink++) {
-        for (auto it = stones.begin(); it != stones.end(); ++it) {
-            uint64_t &stone = *it;
-            if (stone == 0ULL) {
-                stone = 1ULL;
-            } else if (const int num_digits = countDigits(stone); stone >= 10 && num_digits % 2 == 0) {
-                uint64_t factor = 1ULL;
-                for (int i = 0; i < num_digits / 2; i++) {
-                    factor *= 10ULL;
-                }
-
-                stones.insert(it, stone / factor);
-                stone = stone % factor;
-            } else {
-                stone *= 2024ULL;
-            }
-        }
-
-
-#ifndef NDEBUG
-        // printf("%d, %llu\n", blink, stones.size());
-        // // printf("Stones: %llu\n", stones.size());
-        // if (stones.size() < 50) {
-        //     printStones(stones);
-        // }
-#endif
+typedef std::tuple<uint64_t, int> cache_key;
+struct key_hash
+{
+    std::size_t operator()(const cache_key& k) const
+    {
+        return std::get<0>(k) ^ std::get<1>(k);
     }
-}
+};
 
-unsigned int cache_hit = 0;
-unsigned int cache_miss = 0;
-
-uint64_t blinkRecursive(const std::list<uint64_t> &stones, int total_blinks, const int blink_batch, std::unordered_map<uint64_t, std::list<uint64_t>> &blink_cache) {
-    assert(total_blinks % blink_batch == 0);
-    total_blinks -= blink_batch;
-
-    uint64_t total = 0;
-    for (auto stone : stones) {
-        if (!blink_cache.contains(stone)) {
-            std::list<uint64_t> stone_sample { stone };
-            blink(stone_sample, blink_batch);
-            blink_cache[stone] = stone_sample;
-            cache_miss++;
-        } else {
-            cache_hit++;
-        }
-
-        const std::list<uint64_t> &stone_sample = blink_cache[stone];
-        if (total_blinks == 0) {
-            total += stone_sample.size();
-        } else {
-            total += blinkRecursive(stone_sample, total_blinks, blink_batch, blink_cache);
-        }
+uint64_t blink_cached(std::unordered_map<const cache_key, uint64_t, key_hash> &cache, const uint64_t stone, const int blinks, const int blink = 1) {
+    const cache_key key = std::make_tuple(stone, blink);
+    if (blink > blinks) {
+        return 1ULL;
     }
 
-    return total;
+    if (cache.contains(key)) {
+        return cache[key];
+    }
+
+    if (stone == 0ULL) {
+        const uint64_t score = blink_cached(cache, 1ULL, blinks, blink + 1);
+        cache[key] = score;
+        return score;
+    } else if (const int num_digits = countDigits(stone); stone >= 10 && num_digits % 2 == 0) {
+        uint64_t factor = 1ULL;
+        for (int i = 0; i < num_digits / 2; i++) {
+            factor *= 10ULL;
+        }
+
+        const uint64_t first_next_stone = stone / factor;
+        const uint64_t second_next_stone = stone % factor;
+
+        const uint64_t score = blink_cached(cache, first_next_stone, blinks, blink + 1)
+            + blink_cached(cache, second_next_stone, blinks, blink + 1);
+        cache[key] = score;
+        return score;
+    } else {
+        const uint64_t next_stone = stone * 2024ULL;
+        const uint64_t score = blink_cached(cache, next_stone, blinks, blink + 1);
+
+        cache[key] = score;
+        return score;
+    }
 }
 
 void runDay(const char* const buffer, const int length) {
@@ -102,18 +83,14 @@ void runDay(const char* const buffer, const int length) {
         p.consume(' ');
     }
 
-    std::list<uint64_t> stones = original_stones;
-    blink(stones, 25);
-    part1 = stones.size();
+    std::unordered_map<const cache_key, uint64_t, key_hash> cache;
+    for (const auto stone : original_stones) {
+        part1 += blink_cached(cache, stone, 75, 51);
+        part2 += blink_cached(cache, stone, 75, 1);
+    }
 
-    std::unordered_map<uint64_t, std::list<uint64_t>> blink_cache;
-    part2 = blinkRecursive(original_stones, 75, 25, blink_cache);
-
-    printf("Cache: %u | %u | %.2f%%\n", cache_hit, cache_miss, (double)cache_hit/(double)(cache_hit + cache_miss) * 100.0);
-
-    // 199752 -> too low
     printf("%llu\n", part1);
-    printf("%llu\n",part2);
+    printf("%llu\n", part2);
 }
 
 // BOILER PLATE CODE BELOW
