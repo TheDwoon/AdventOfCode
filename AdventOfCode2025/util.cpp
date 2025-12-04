@@ -80,6 +80,11 @@ namespace aoc {
         }
 
         [[nodiscard]]
+        bool contains(const int x, const int y) const {
+            return x >= 0 && x < width && y >= 0 && y < height;
+        }
+
+        [[nodiscard]]
         T& at(const int x, const int y) const {
             assert (x >= 0 && x < width);
             assert (y >= 0 && y < height);
