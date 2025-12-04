@@ -3,6 +3,7 @@
 #include <vector>
 #include <cmath>
 #include <cstdint>
+#include <set>
 #include <pstl/execution_defs.h>
 
 #include "parser.cpp"
@@ -57,13 +58,7 @@ bool isAdvancedFake(const uint64_t number)
     return false;
 }
 
-int findFakeRange(const std::vector<uint64_t>& cache, const uint64_t number)
-{
-    const auto it = std::lower_bound(cache.begin(), cache.end(), number);
-    return static_cast<int>(it - cache.begin());
-}
-
-void runDay(char* const buffer, const int length, const std::vector<uint64_t>& cachePart1, const std::vector<uint64_t>& cachePart2) {
+void runDay(char* const buffer, const int length, const std::set<uint64_t>& cachePart1, const std::set<uint64_t>& cachePart2) {
     uint64_t part1 = 0;
     uint64_t part2 = 0;
 
@@ -81,24 +76,27 @@ void runDay(char* const buffer, const int length, const std::vector<uint64_t>& c
 
     for (const auto& r : ranges)
     {
-        int index = findFakeRange(cachePart1, r.start);
-        while (index < cachePart1.size() && cachePart1[index] <= r.end)
+        auto it = cachePart1.lower_bound(r.start);
+        while (it != cachePart1.end() && *it < r.start)
+            ++it;
+
+        while (it != cachePart1.end() && *it <= r.end)
         {
-            part1 += cachePart1[index];
-            index++;
+            const auto fakeId = *it;
+            part1 += fakeId;
+            ++it;
         }
-        // for (uint64_t i = r.start; i <= r.end; ++i)
-        // {
-        //     if (isFakeId(i))
-        //     {
-        //         part1 += i;
-        //         part2 += i;
-        //     }
-        //     else if (isAdvancedFake(i))
-        //     {
-        //         part2 += i;
-        //     }
-        // }
+
+        it = cachePart2.lower_bound(r.start);
+        while (it != cachePart2.end() && *it < r.start)
+            ++it;
+
+        while (it != cachePart2.end() && *it <= r.end)
+        {
+            const auto fakeId = *it;
+            part2 += fakeId;
+            ++it;
+        }
     }
 
     printf("%llu\n",part1);
@@ -125,7 +123,7 @@ uint64_t constructFakeId(const uint64_t segment, const uint64_t factor, const in
     return fakeId;
 }
 
-void generateFakeIds(std::vector<uint64_t>& fakeIds, const int magnitude, const int repeat)
+void generateFakeIds(std::set<uint64_t>& fakeIds, const int magnitude, const int repeat)
 {
     const uint64_t start = pow10(magnitude);
     const uint64_t end = pow10(magnitude + 1) - 1;
@@ -134,11 +132,11 @@ void generateFakeIds(std::vector<uint64_t>& fakeIds, const int magnitude, const 
     for (uint64_t segment = start; segment <= end; ++segment)
     {
         const uint64_t fakeId = constructFakeId(segment, factor, repeat);
-        fakeIds.push_back(fakeId);
+        fakeIds.insert(fakeId);
     }
 }
 
-void buildAccelerationStructure(std::vector<uint64_t>& cachePart1, std::vector<uint64_t>& cachePart2)
+void buildAccelerationStructure(std::set<uint64_t>& cachePart1, std::set<uint64_t>& cachePart2)
 {
     // Generate only symmetric cases
     for (int magnitude = 0; magnitude <= 6; ++magnitude)
@@ -149,7 +147,7 @@ void buildAccelerationStructure(std::vector<uint64_t>& cachePart1, std::vector<u
     cachePart2 = cachePart1;
 
     // Generate other cases
-    for (int magnitude = 1; magnitude <= 6; ++magnitude)
+    for (int magnitude = 0; magnitude <= 6; ++magnitude)
     {
         for (int repeat = 3; repeat <= 10 && repeat * magnitude <= 10; ++repeat)
         {
@@ -162,11 +160,11 @@ void buildAccelerationStructure(std::vector<uint64_t>& cachePart1, std::vector<u
 
 int main()
 {
-    std::vector<uint64_t> cachePart1;
-    std::vector<uint64_t> cachePart2;
+    std::set<uint64_t> cachePart1;
+    std::set<uint64_t> cachePart2;
     buildAccelerationStructure(cachePart1, cachePart2);
 
-    std::ranges::sort(cachePart1);
+    // std::ranges::sort(cachePart1);
     // std::ranges::sort(cachePart2);
 
     printf("ready!\n");
