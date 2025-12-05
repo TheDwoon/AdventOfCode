@@ -44,6 +44,7 @@ void runDay(char* const buffer, const int length) {
     }
 
     std::sort(validRanges.begin(), validRanges.end());
+    std::ranges::sort(numbers);
     std::vector<range> distinctValidRanges;
 
     range currentRange = validRanges[0];
@@ -62,16 +63,19 @@ void runDay(char* const buffer, const int length) {
 
     distinctValidRanges.push_back(currentRange);
 
-    for (const auto&n : numbers)
-    {
-        const range search = { n, n };
-        auto it = std::lower_bound(distinctValidRanges.cbegin(), distinctValidRanges.cend(), search);
-        if (it != distinctValidRanges.cbegin())
-            --it;
+    auto numberIt = numbers.begin();
+    auto rangeIt = distinctValidRanges.begin();
 
-        if (it->start <= n && n <= it->end)
+    while (numberIt != numbers.end() && rangeIt != distinctValidRanges.end())
+    {
+        if (*numberIt < rangeIt->start)
+            ++numberIt;
+        else if (*numberIt > rangeIt->end)
+            ++rangeIt;
+        else if (rangeIt->start <= *numberIt && *numberIt <= rangeIt->end)
         {
-            part1 += 1;
+            ++part1;
+            ++numberIt;
         }
     }
 
