@@ -15,7 +15,21 @@ struct vec2 {
     vec2(T x, T y) : x(x), y(y) {
 
     }
+    static vec2<T> min(const vec2<T>& a, const vec2<T>& b) {
+        vec2<T> v;
+        v.x = std::min(a.x, b.x);
+        v.y = std::min(a.y, b.y);
 
+        return v;
+    }
+
+    static vec2<T> max(const vec2<T>& a, const vec2<T>& b) {
+        vec2<T> v;
+        v.x = std::max(a.x, b.x);
+        v.y = std::max(a.y, b.y);
+
+        return v;
+    }
     [[nodiscard]]
     T length2() const {
         return x * x + y * y;
