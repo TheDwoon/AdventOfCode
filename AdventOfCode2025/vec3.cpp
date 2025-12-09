@@ -35,6 +35,19 @@ struct vec3 {
         return v;
     }
 
+    static T distanceSquared(const vec3<T>& a, const vec3<T>& b) {
+        return (a - b).length2();
+    }
+
+    T sum() const {
+        return x + y + z;
+    }
+
+    [[nodiscard]]
+    T length2() const {
+        return x * x + y * y + z * z;
+    }
+
     vec3& operator+=(const vec3<T>& other) {
         x += other.x;
         y += other.y;
@@ -54,7 +67,7 @@ struct vec3 {
     vec3& operator-=(const vec3<T>& other) {
         x -= other.x;
         y -= other.y;
-        y -= other.z;
+        z -= other.z;
 
         return *this;
     }
