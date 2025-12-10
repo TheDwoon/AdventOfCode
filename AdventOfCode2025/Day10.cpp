@@ -28,7 +28,7 @@ void rateState(const uint16_t targetBits, machine_state& state)
 {
     const uint16_t stateBits = std::popcount(state.state);
 
-    state.rating = std::max(targetBits, stateBits) - std::min(targetBits, stateBits) + state.buttonsPushed.size();
+    state.rating = std::max(targetBits, stateBits) - std::min(targetBits, stateBits) + 4 * state.buttonsPushed.size();
 }
 
 void runDay(char* const buffer, const int length) {
@@ -43,16 +43,16 @@ void runDay(char* const buffer, const int length) {
 
         // Parse target state
         p.consume('[');
-        while (p.peek() == '.' || p.peek() == '#')
+        for (int i = 0; p.peek() == '.' || p.peek() == '#'; i++)
         {
             switch (p.read())
             {
             case '.':
-                m.targetState = (m.targetState << 1) | 0;
+                m.targetState |= 0U << i;
                 break;
 
             case '#':
-                m.targetState = (m.targetState << 1) | 1;
+                m.targetState |= 1U << i;
                 break;
             }
         }
@@ -103,15 +103,16 @@ void runDay(char* const buffer, const int length) {
             queue.push(initialState);
         }
 
-        while (!queue.empty())
+        bool foundSolution = false;
+        while (!queue.empty() && !foundSolution)
         {
             machine_state state = queue.top();
             queue.pop();
 
             if (state.state == machine.targetState)
             {
-                part1 += state.buttonsPushed.size();
-                break;
+                part1 += static_cast<int>(state.buttonsPushed.size());
+                foundSolution = true;
             }
 
             for (const auto& button : machine.buttons)
@@ -126,6 +127,9 @@ void runDay(char* const buffer, const int length) {
                 queue.push(newState);
             }
         }
+
+        if (!foundSolution)
+            printf("FUCK!\n");
     }
 
     printf("%d\n",part1);
